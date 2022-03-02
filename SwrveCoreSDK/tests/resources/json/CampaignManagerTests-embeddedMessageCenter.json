@@ -1,0 +1,40 @@
+{
+    "campaigns": {
+        "game_data": {},
+        "campaigns": [
+            {
+                "id": 307239,
+                "start_date": 1522945504000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 1,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 1
+                },
+                "triggers": [],
+                "embedded_message": {
+                    "id": 527804,
+                    "name": "Embedded Campaign Test",
+                    "data": "{\"content\": {\"key1\": \"${user.my_coupon}\", \"key2\": \"${user.my_coupon}\"}}",
+                    "type": "json",
+                    "buttons": ["button 1"],
+                    "version": 1,
+                    "rules": {},
+                    "priority": 9999
+                },
+                "message_center": true,
+                "subject": "EXAMPLE_DELETE_ME"
+            }
+        ],
+        "rules": {
+            "max_messages_per_session": 99999,
+            "delay_first_message": 1,
+            "min_delay_between_messages": 1
+        },
+        "cdn_root": "http://content-cdn.swrve.com/messaging/message_image/",
+        "version": 2
+    },
+    "flush_frequency": 60000,
+    "flush_refresh_delay": 1000
+}

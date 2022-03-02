@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "es5",                                    
+    "lib": [
+      "es5",
+      "dom",
+      "scripthost",
+      "es2015.promise"
+    ],
+    
+    /* Modules */
+    "module": "commonjs",
+    "rootDirs": ["./src", "./tests"], 
+    "typeRoots": ["./typings.d.ts"], 
+    "types": ["@types/jest"],                   
+    "resolveJsonModule": true,                          
+    
+    /* Emit */
+    "declaration": true,                                 
+    "outDir": "./dist/lib",                              
+    "esModuleInterop": true,                             
+    "forceConsistentCasingInFileNames": true,            
+
+    /* Type Checking */
+    "strict": true,                                      
+    "noImplicitReturns": true,                           
+    "noFallthroughCasesInSwitch": true,                  
+    "skipLibCheck": true                                 
+  }
+}

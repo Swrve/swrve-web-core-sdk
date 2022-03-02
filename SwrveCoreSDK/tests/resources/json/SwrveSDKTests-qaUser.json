@@ -1,0 +1,1089 @@
+{
+    "qa": {
+        "reset_device_state": true,
+        "logging": true
+    },
+    "campaigns": {
+        "game_data": {},
+        "campaigns": [
+            {
+                "id": 315114,
+                "start_date": 1525382202000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 10,
+                    "dismiss_after_views": 5,
+                    "display_order": "random",
+                    "min_delay_between_messages": 20
+                },
+                "triggers": [
+                    {
+                        "event_name": "Swrve.Messages.showAtSessionStart",
+                        "conditions": {}
+                    },
+                    {
+                        "event_name": "tv.event_simple",
+                        "conditions": {}
+                    }
+                ],
+                "message_center": false,
+                "messages": [
+                    {
+                        "id": 317354,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 2206,
+                                            "image_height": 1244,
+                                            "image_filename": "Europe 1127.jpg",
+                                            "image": {
+                                                "type": "asset",
+                                                "value": "538d8c05e46a8e46095d9e6f26299c3c9453a717"
+                                            },
+                                            "color": {
+                                                "type": "color",
+                                                "value": "FFFFFF"
+                                            }
+                                        }
+                                    ],
+                                    "buttons": [
+                                        {
+                                            "name": "Button",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 825
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 499
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 81,
+                                            "image_height": 81,
+                                            "image_filename": "App Icon - 60x60@2x.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "DISMISS"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": ""
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "bddccccb16d1f3d32a72f2699383cc8ef1b33fee"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "Rachel's Test",
+                        "rules": {
+                            "orientations": "landscape"
+                        },
+                        "priority": 2
+                    }
+                ],
+                "subject": "Develop Trigger Feature"
+            },
+            {
+                "id": 298948,
+                "start_date": 1519242095000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 1,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 1
+                },
+                "triggers": [],
+                "message_center": true,
+                "messages": [
+                    {
+                        "id": 301432,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [],
+                                    "buttons": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": -8
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": -109
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 1385,
+                                            "image_height": 862,
+                                            "image_filename": "media_image.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "DISMISS"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": ""
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "d31a9dcec7bb2c2a0bbd63451cea799fdb774d76"
+                                            }
+                                        },
+                                        {
+                                            "name": "Button One",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 351
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 412
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 618,
+                                            "image_height": 137,
+                                            "image_filename": "UpgradeNow.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "CUSTOM"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": "https://www.google.com"
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "fa9f4a3738a8dbbd63f16bb8d0061e66f33d243d"
+                                            }
+                                        },
+                                        {
+                                            "name": "Button Two",
+                                            "x": {
+                                                "type": "number",
+                                                "value": -393
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 414
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 618,
+                                            "image_height": 137,
+                                            "image_filename": "NoThanks.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "CUSTOM"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": "SwrveDevApp://settings"
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "d4d21364696ddd88f589bb4dbb4b57f8505b8c41"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "OTT_DEMO",
+                        "rules": {
+                            "orientations": "landscape"
+                        },
+                        "priority": 9999
+                    }
+                ],
+                "subject": "Test"
+            },
+            {
+                "id": 307239,
+                "start_date": 1522945504000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 1,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 1
+                },
+                "triggers": [],
+                "message_center": true,
+                "messages": [
+                    {
+                        "id": 309567,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 203,
+                                            "image_height": 295,
+                                            "image_filename": "Bitmap.png",
+                                            "image": {
+                                                "type": "asset",
+                                                "value": "699d08f6f0ae60bafc5a143e09076b31ee222bdd"
+                                            },
+                                            "color": {
+                                                "type": "color",
+                                                "value": "FFFFFF"
+                                            }
+                                        }
+                                    ],
+                                    "buttons": [
+                                        {
+                                            "name": "Button",
+                                            "x": {
+                                                "type": "number",
+                                                "value": -5
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": -28
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 86,
+                                            "image_height": 78,
+                                            "image_filename": "swift.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "DISMISS"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": ""
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "0d33eb4ed5f6cf67ac42fcc523f3c5e37e8b0f74"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "OTT_EXAMPLE",
+                        "rules": {
+                            "orientations": "landscape"
+                        },
+                        "priority": 9999
+                    }
+                ],
+                "subject": "EXAMPLE_DELETE_ME"
+            },
+            {
+                "id": 309489,
+                "start_date": 1523636164000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 1,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 1
+                },
+                "triggers": [],
+                "message_center": true,
+                "messages": [
+                    {
+                        "id": 311786,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [],
+                                    "buttons": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": -80
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 5
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 1891,
+                                            "image_height": 574,
+                                            "image_filename": "LinkedIn_Banner_50%_WithLogo.jpg",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "DISMISS"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": ""
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "a27949f3793e4482286703d27b5510c45a9ee0d5"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "Message Center IAM",
+                        "rules": {
+                            "orientations": "landscape"
+                        },
+                        "priority": 9999
+                    }
+                ],
+                "subject": "To show where the Message Centre is"
+            },
+            {
+                "id": 309486,
+                "start_date": 1523635621000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 1,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 1
+                },
+                "triggers": [],
+                "message_center": true,
+                "messages": [
+                    {
+                        "id": 311783,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 922,
+                                            "image_height": 509,
+                                            "image_filename": "Purchase_InApp_BG_2.png",
+                                            "image": {
+                                                "type": "asset",
+                                                "value": "e2a6e4180bebc48fb12eacb0114f6f18b250ebf9"
+                                            },
+                                            "color": {
+                                                "type": "color",
+                                                "value": "FFFFFF"
+                                            }
+                                        }
+                                    ],
+                                    "buttons": [
+                                        {
+                                            "name": "Button One",
+                                            "x": {
+                                                "type": "number",
+                                                "value": -216
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 191
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 346,
+                                            "image_height": 76,
+                                            "image_filename": "nothanks_Button_2.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "DISMISS"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": ""
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "3a97412017c36f9a2bfe66da1fd0013a3f80b44c"
+                                            }
+                                        },
+                                        {
+                                            "name": "Button Two",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 200
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 191
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 345,
+                                            "image_height": 76,
+                                            "image_filename": "purchase_button_2.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "CUSTOM"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": "swrve://purchase_link"
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "d810a603968f2f168cdd1c5e95259f9b0a25d2bd"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "Sales Demo 2 Button",
+                        "rules": {
+                            "orientations": "landscape"
+                        },
+                        "priority": 9999
+                    }
+                ],
+                "subject": null
+            },
+            {
+                "id": 309487,
+                "start_date": 1523635898000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 1,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 1
+                },
+                "triggers": [],
+                "message_center": true,
+                "messages": [
+                    {
+                        "id": 311784,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [],
+                                    "buttons": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 1383,
+                                            "image_height": 764,
+                                            "image_filename": "Alerts_InApp_3.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "DISMISS"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": ""
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "c7a01c066c182bf2d4eb9b390aa2c18ee2587726"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "Sales Demo Alert",
+                        "rules": {
+                            "orientations": "landscape"
+                        },
+                        "priority": 9999
+                    }
+                ],
+                "subject": null
+            },
+            {
+                "id": 298857,
+                "start_date": 1519159788000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 1,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 1
+                },
+                "triggers": [
+                    {
+                        "event_name": "Hello.World",
+                        "conditions": {}
+                    }
+                ],
+                "message_center": false,
+                "messages": [
+                    {
+                        "id": 301338,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Portrait",
+                                    "orientation": "portrait",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1080
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1730
+                                        }
+                                    },
+                                    "images": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 9
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": -155
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "image_width": 405,
+                                            "image_height": 589,
+                                            "image_filename": "got.png",
+                                            "image": {
+                                                "type": "asset",
+                                                "value": "d31d3a2d078b5c4fb247ada9f427114c972e6fe7"
+                                            },
+                                            "color": {
+                                                "type": "color",
+                                                "value": "FFFFFF"
+                                            }
+                                        }
+                                    ],
+                                    "buttons": [
+                                        {
+                                            "name": "Button",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 9
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 332
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 618,
+                                            "image_height": 137,
+                                            "image_filename": "UpgradeNow.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "CUSTOM"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": "SwrveDevApp://data"
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "984af4faaedbb44926aa402fe2f6014e63573945"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Portrait",
+                                    "scale": 1
+                                },
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": -3
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": -50
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 1385,
+                                            "image_height": 862,
+                                            "image_filename": "Message.png",
+                                            "image": {
+                                                "type": "asset",
+                                                "value": "7fa35d956193486aa78cd0f970c2432f83d53c9e"
+                                            },
+                                            "color": {
+                                                "type": "color",
+                                                "value": "FFFFFF"
+                                            }
+                                        }
+                                    ],
+                                    "buttons": [
+                                        {
+                                            "name": "Button",
+                                            "x": {
+                                                "type": "number",
+                                                "value": -3
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 267
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 618,
+                                            "image_height": 137,
+                                            "image_filename": "UpgradeNow.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "CUSTOM"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": "SwrveDevApp://data"
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "15e296369e6de54aef287dd36778bcdc01394bcf"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "Velope Demo",
+                        "rules": {
+                            "orientations": "both"
+                        },
+                        "priority": 9999
+                    }
+                ],
+                "subject": "Show off SDK"
+            },
+            {
+                "id": 309481,
+                "start_date": 1523634300000,
+                "end_date": 2145920400000,
+                "rules": {
+                    "delay_first_message": 1,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 1
+                },
+                "triggers": [],
+                "message_center": true,
+                "messages": [
+                    {
+                        "id": 311778,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": -31
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 922,
+                                            "image_height": 509,
+                                            "image_filename": "Discovery_InApp_2.png",
+                                            "image": {
+                                                "type": "asset",
+                                                "value": "806bef635876b52222333ffca72a7927709b0bf2"
+                                            },
+                                            "color": {
+                                                "type": "color",
+                                                "value": "FFFFFF"
+                                            }
+                                        }
+                                    ],
+                                    "buttons": [
+                                        {
+                                            "name": "Button",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 8
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 162
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 81
+                                            },
+                                            "image_width": 345,
+                                            "image_height": 76,
+                                            "image_filename": "Ok_Got_It_Button_2.png",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "DISMISS"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": ""
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "31285d9d2f03d6e146a98460f7c9a8f723fb7c2d"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "Sales Demos",
+                        "rules": {
+                            "orientations": "landscape"
+                        },
+                        "priority": 9999
+                    }
+                ],
+                "subject": null
+            }
+        ],
+        "rules": {
+            "max_messages_per_session": 99999,
+            "delay_first_message": 1,
+            "min_delay_between_messages": 1
+        },
+        "cdn_root": "http://content-cdn.swrve.com/messaging/message_image/",
+        "version": 2
+    },
+    "flush_frequency": 60000,
+    "flush_refresh_delay": 1000
+}

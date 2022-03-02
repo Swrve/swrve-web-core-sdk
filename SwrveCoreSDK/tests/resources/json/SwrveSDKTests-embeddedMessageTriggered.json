@@ -1,0 +1,54 @@
+{
+    "real_time_user_properties": {
+        "testkey": "testvalue",
+        "author": "adam"
+    },
+    "campaigns": {
+        "qa": {
+            "reset_device_state": true,
+            "logging": true
+        },
+        "campaigns": [
+            {
+                "id": 315415,
+                "start_date": null,
+                "end_date": null,
+                "rules": {
+                    "delay_first_message": 0,
+                    "dismiss_after_views": 99999,
+                    "display_order": "random",
+                    "min_delay_between_messages": 0
+                },
+                "triggers": [
+                    {
+                        "event_name": "embedded.trigger",
+                        "conditions": {
+                        }
+                    }
+                ],
+                "message_center": false,
+                "embedded_message": {
+                    "id": 527804,
+                    "name": "Embedded triggered Campaign Test",
+                    "data": "This data is of string format or really anything",
+                    "type": "other",
+                    "buttons": ["button1", "button2"],
+                    "version": 1,
+                    "rules": {},
+                    "priority": 9999
+                },
+                "subject": "Test Embedded triggers"
+            }
+        ],
+        "rules": {
+            "max_messages_per_session": 99999,
+            "delay_first_message": 0,
+            "min_delay_between_messages": 0
+        },
+        "cdn_root": "http://content-cdn.swrve.com/messaging/message_image/",
+        "version": 2,
+        "game_data":{}
+    },
+    "flush_frequency": 60000,
+    "flush_refresh_delay": 1000
+}

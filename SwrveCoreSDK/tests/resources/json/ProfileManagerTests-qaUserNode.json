@@ -1,0 +1,19 @@
+{
+    "campaigns": {
+        "game_data": {},
+        "campaigns": [],
+        "rules": {
+            "max_messages_per_session": 99999,
+            "delay_first_message": 1,
+            "min_delay_between_messages": 1
+        },
+        "cdn_root": "http://content-cdn.swrve.com/messaging/message_image/",
+        "version": 2
+    },
+    "qa": {
+        "reset_device_state": true,
+        "logging": true
+    },
+    "flush_frequency": 60000,
+    "flush_refresh_delay": 1000
+}

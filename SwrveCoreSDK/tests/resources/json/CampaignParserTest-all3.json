@@ -1,0 +1,154 @@
+{
+    "game_data": {},
+    "campaigns": [
+      {
+        "id": 298948,
+        "start_date": 1519242095000,
+        "end_date": 2145920400000,
+        "rules": {
+          "delay_first_message": 1,
+          "dismiss_after_views": 99999,
+          "display_order": "random",
+          "min_delay_between_messages": 1
+        },
+        "triggers": [],
+        "message_center": true,
+        "subject": "Test"
+      },
+      {
+        "id": 298857,
+        "start_date": 1519159788000,
+        "end_date": 2145920400000,
+        "rules": {
+          "delay_first_message": 1,
+          "dismiss_after_views": 99999,
+          "display_order": "random",
+          "min_delay_between_messages": 1
+        },
+        "triggers": [
+          {
+            "event_name": "Hello.World"
+          }
+        ],
+        "message_center": false,
+        "messages": [
+          {
+            "id": 301338,
+            "template": {
+              "formats": [
+                {
+                  "name": "[0.5]Multi-Platform - Landscape",
+                  "orientation": "landscape",
+                  "language": "*",
+                  "size": {
+                    "w": {
+                      "type": "number",
+                      "value": 1280
+                    },
+                    "h": {
+                      "type": "number",
+                      "value": 799
+                    }
+                  },
+                  "images": [
+                    {
+                      "name": "Background",
+                      "x": {
+                        "type": "number",
+                        "value": -3
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": -37
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 1422
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 960
+                      },
+                      "image_width": 1025,
+                      "image_height": 638,
+                      "image_filename": "Message.png",
+                      "image": {
+                        "type": "asset",
+                        "value": "7e51e13958e1267b2dc8f7419565b59bfd236cb7"
+                      },
+                      "color": {
+                        "type": "color",
+                        "value": "FFFFFF"
+                      }
+                    }
+                  ],
+                  "buttons": [
+                    {
+                      "name": "Button",
+                      "x": {
+                        "type": "number",
+                        "value": -2
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 198
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 120
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 60
+                      },
+                      "image_width": 457,
+                      "image_height": 101,
+                      "image_filename": "UpgradeNow.png",
+                      "type": {
+                        "type": "text",
+                        "value": "CUSTOM"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": "SwrveDevApp://data"
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "image_up": {
+                        "type": "asset",
+                        "value": "11621510a2b84f238789fdb30fd4961c0e05b517"
+                      }
+                    }
+                  ],
+                  "scaled_by": 0.5,
+                  "scaled_from": "Multi-Platform - Landscape",
+                  "scale": 1
+                }
+              ]
+            },
+            "name": "Velope Demo",
+            "rules": {
+              "orientations": "both"
+            },
+            "priority": 9999
+          }
+        ],
+        "subject": "Show off SDK"
+      }
+    ],
+    "rules": {
+      "max_messages_per_session": 99999,
+      "delay_first_message": 1,
+      "min_delay_between_messages": 1
+    },
+    "qa": {
+      "reset_device_state": true,
+      "logging": true,
+      "logging_url": "https://30512.qa-log.swrve.com",
+      "campaigns": []
+    },
+    "cdn_root": "https://content-cdn.swrve.com/messaging/message_image/",
+    "version": 1
+  }

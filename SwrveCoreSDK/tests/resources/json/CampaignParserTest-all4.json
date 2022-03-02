@@ -1,0 +1,50 @@
+{
+    "game_data": {},
+    "campaigns": [
+      {
+        "id": 298948,
+        "start_date": 1519242095000,
+        "end_date": 2145920400000,
+        "rules": {
+          "delay_first_message": 1,
+          "dismiss_after_views": 99999,
+          "display_order": "random",
+          "min_delay_between_messages": 1
+        },
+        "triggers": [],
+        "message_center": true,
+        "subject": "Test"
+      },
+      {
+        "id": 298857,
+        "start_date": 1519159788000,
+        "end_date": 2145920400000,
+        "rules": {
+          "delay_first_message": 1,
+          "dismiss_after_views": 99999,
+          "display_order": "random",
+          "min_delay_between_messages": 1
+        },
+        "triggers": [
+          {
+            "event_name": "Hello.World"
+          }
+        ],
+        "message_center": false,
+        "subject": "Show off SDK"
+      }
+    ],
+    "rules": {
+      "max_messages_per_session": 99999,
+      "delay_first_message": 1,
+      "min_delay_between_messages": 1
+    },
+    "qa": {
+      "reset_device_state": true,
+      "logging": true,
+      "logging_url": "https://30512.qa-log.swrve.com",
+      "campaigns": []
+    },
+    "cdn_root": "https://content-cdn.swrve.com/messaging/message_image/",
+    "version": 1
+  }

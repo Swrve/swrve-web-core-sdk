@@ -1,0 +1,48 @@
+{
+    "id": 315415,
+    "start_date": null,
+    "end_date": null,
+    "rules": {
+        "delay_first_message": 0,
+        "dismiss_after_views": 99999,
+        "display_order": "random",
+        "min_delay_between_messages": null
+    },
+    "triggers": [],
+    "message_center": false,
+    "messages": [
+        {
+            "id": 317653,
+            "template": {
+                "formats": [
+                    {
+                        "name": "[0.675844806]Multi-Platform - Landscape",
+                        "orientation": "landscape",
+                        "language": "*",
+                        "size": {
+                            "w": {
+                                "type": "number",
+                                "value": 1730
+                            },
+                            "h": {
+                                "type": "number",
+                                "value": 1080
+                            }
+                        },
+                        "images": [],
+                        "buttons": [],
+                        "scaled_by": 0.675844806,
+                        "scaled_from": "Multi-Platform - Landscape",
+                        "scale": 1
+                    }
+                ]
+            },
+            "name": "Rachel Trigger Test",
+            "rules": {
+                "orientations": "landscape"
+            },
+            "priority": 9999
+        }
+    ],
+    "subject": "Test triggers"
+}

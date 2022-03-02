@@ -1,0 +1,295 @@
+{
+    "game_data": {},
+    "campaigns": [
+      {
+        "id": 298948,
+        "start_date": 1519242095000,
+        "end_date": 2145920400000,
+        "rules": {
+          "delay_first_message": 1,
+          "dismiss_after_views": 99999,
+          "display_order": "random",
+          "min_delay_between_messages": 1
+        },
+        "triggers": [],
+        "message_center": true,
+        "messages": [
+          {
+            "id": 301432,
+            "template": {
+              "formats": [
+                {
+                  "name": "[0.5]Multi-Platform - Landscape",
+                  "orientation": "landscape",
+                  "language": "*",
+                  "size": {
+                    "w": {
+                      "type": "number",
+                      "value": 1280
+                    },
+                    "h": {
+                      "type": "number",
+                      "value": 799
+                    }
+                  },
+                  "images": [],
+                  "buttons": [
+                    {
+                      "name": "Background",
+                      "x": {
+                        "type": "number",
+                        "value": -6
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": -81
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 1422
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 960
+                      },
+                      "image_width": 1025,
+                      "image_height": 638,
+                      "image_filename": "media_image.png",
+                      "type": {
+                        "type": "text",
+                        "value": "DISMISS"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": ""
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "image_up": {
+                        "type": "asset",
+                        "value": "7302bd2f9fd6fbacfe24fa3ac18f72ba5196d5e0"
+                      }
+                    },
+                    {
+                      "name": "Button One",
+                      "x": {
+                        "type": "number",
+                        "value": 260
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 305
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 120
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 60
+                      },
+                      "image_width": 457,
+                      "image_height": 101,
+                      "image_filename": "UpgradeNow.png",
+                      "type": {
+                        "type": "text",
+                        "value": "CUSTOM"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": "https://www.google.com"
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "image_up": {
+                        "type": "asset",
+                        "value": "fafc882055601ea17c5d41bd631c39109a1858f5"
+                      }
+                    },
+                    {
+                      "name": "Button Two",
+                      "x": {
+                        "type": "number",
+                        "value": -291
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 306
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 120
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 60
+                      },
+                      "image_width": 457,
+                      "image_height": 101,
+                      "image_filename": "NoThanks.png",
+                      "type": {
+                        "type": "text",
+                        "value": "CUSTOM"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": "SwrveDevApp://settings"
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "image_up": {
+                        "type": "asset",
+                        "value": "d7a51ea7fd1e71598de7238b0ba258a8f8bcd8ac"
+                      }
+                    }
+                  ],
+                  "scaled_by": 0.5,
+                  "scaled_from": "Multi-Platform - Landscape",
+                  "scale": 1
+                }
+              ]
+            },
+            "name": "OTT_DEMO",
+            "rules": {
+              "orientations": "landscape"
+            },
+            "priority": 9999
+          }
+        ],
+        "subject": "Test"
+      },
+      {
+        "id": 298857,
+        "start_date": 1519159788000,
+        "end_date": 2145920400000,
+        "rules": {
+          "delay_first_message": 1,
+          "dismiss_after_views": 99999,
+          "display_order": "random",
+          "min_delay_between_messages": 1
+        },
+        "triggers": [
+          "Hello.World"
+        ],
+        "message_center": false,
+        "messages": [
+          {
+            "id": 301338,
+            "template": {
+              "formats": [
+                {
+                  "name": "[0.5]Multi-Platform - Landscape",
+                  "orientation": "landscape",
+                  "language": "*",
+                  "size": {
+                    "w": {
+                      "type": "number",
+                      "value": 1280
+                    },
+                    "h": {
+                      "type": "number",
+                      "value": 799
+                    }
+                  },
+                  "images": [
+                    {
+                      "name": "Background",
+                      "x": {
+                        "type": "number",
+                        "value": -3
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": -37
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 1422
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 960
+                      },
+                      "image_width": 1025,
+                      "image_height": 638,
+                      "image_filename": "Message.png",
+                      "image": {
+                        "type": "asset",
+                        "value": "7e51e13958e1267b2dc8f7419565b59bfd236cb7"
+                      },
+                      "color": {
+                        "type": "color",
+                        "value": "FFFFFF"
+                      }
+                    }
+                  ],
+                  "buttons": [
+                    {
+                      "name": "Button",
+                      "x": {
+                        "type": "number",
+                        "value": -2
+                      },
+                      "y": {
+                        "type": "number",
+                        "value": 198
+                      },
+                      "w": {
+                        "type": "number",
+                        "value": 120
+                      },
+                      "h": {
+                        "type": "number",
+                        "value": 60
+                      },
+                      "image_width": 457,
+                      "image_height": 101,
+                      "image_filename": "UpgradeNow.png",
+                      "type": {
+                        "type": "text",
+                        "value": "CUSTOM"
+                      },
+                      "action": {
+                        "type": "text",
+                        "value": "SwrveDevApp://data"
+                      },
+                      "game_id": {
+                        "type": "number",
+                        "value": ""
+                      },
+                      "image_up": {
+                        "type": "asset",
+                        "value": "11621510a2b84f238789fdb30fd4961c0e05b517"
+                      }
+                    }
+                  ],
+                  "scaled_by": 0.5,
+                  "scaled_from": "Multi-Platform - Landscape",
+                  "scale": 1
+                }
+              ]
+            },
+            "name": "Velope Demo",
+            "rules": {
+              "orientations": "both"
+            },
+            "priority": 9999
+          }
+        ],
+        "subject": "Show off SDK"
+      }
+    ],
+    "rules": {
+      "max_messages_per_session": 99999,
+      "delay_first_message": 1,
+      "min_delay_between_messages": 1
+    },
+    "cdn_root": "https://content-cdn.swrve.com/messaging/message_image/",
+    "version": 1
+  }

@@ -1,0 +1,50 @@
+{
+  "name": "@swrve/web-core",
+  "version": "0.0.1",
+  "description": "Swrve marketing engagement platform web core SDK",
+  "keywords": [
+    "swrve",
+    "sdk",
+    "web",
+    "core",
+    "engagement",
+    "marketing",
+    "platform"
+  ],
+  "author": "Swrve Inc.",
+  "license": "Apache-2.0",
+  "readme":"../README.md",
+  "homepage": "https://github.com/Swrve/swrve-web-core-sdk#readme",
+  "main": "dist/SwrveCoreSDK.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "lib/**/*"
+  ],
+  "scripts": {
+    "tsc": "tsc",
+    "prepare": "tsc",
+    "prepublish": "yarn build",
+    "clean": "rm -rf dist/*",
+    "build": "yarn clean && tsc -p tsconfig-build.json --declaration --declarationDir dist/types && webpack --config webpack.config.js --progress",
+    "build:dev": "yarn clean && tsc -p tsconfig-build.json --declaration --declarationDir dist/types && webpack --config webpack.development.config.js --progress",
+    "test": "jest --ci --coverage --runInBand --testResultsProcessor='jest-junit'",
+    "test:watch": "jest --watch",
+    "lint": "tslint --project . \"**/*.ts\""
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.3",
+    "jest": "^27.3.1",
+    "jest-junit": "^13.0.0",
+    "strip-loader": "^0.1.2",
+    "ts-jest": "^27.0.7",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.4",
+    "webpack": "^5.63.0",
+    "webpack-cli": "^4.9.1",
+    "worker-loader": "^2.0.0"
+  },
+  "dependencies": {
+    "@types/crypto-js": "^4.0.2",
+    "crypto-js": "^4.1.1"
+  }
+}

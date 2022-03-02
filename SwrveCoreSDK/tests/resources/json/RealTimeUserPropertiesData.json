@@ -1,0 +1,18 @@
+{
+  "real_time_user_properties": {
+    "swrve.language":"en-GB"
+  },
+  "campaigns": {
+      "campaigns": [],
+      "game_data": {},
+      "rules": {
+          "max_messages_per_session": 99999,
+          "delay_first_message": 1,
+          "min_delay_between_messages": 1
+      },
+      "version": 0
+  },
+  "flush_frequency": 60000,
+  "flush_refresh_delay": 1000,
+  "user_resources": null
+}

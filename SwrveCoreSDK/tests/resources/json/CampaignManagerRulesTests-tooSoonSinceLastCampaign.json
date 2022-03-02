@@ -1,0 +1,109 @@
+{
+    "campaigns": {
+        "campaigns": [
+            {
+                "id": 315415,
+                "start_date": null,
+                "end_date": null,
+                "rules": {
+                    "delay_first_message": 0,
+                    "dismiss_after_views": 100,
+                    "display_order": "random",
+                    "min_delay_between_messages": null
+                },
+                "triggers": [
+                    {
+                        "event_name": "tv.event_simple",
+                        "conditions": {
+                        }
+                    }
+                ],
+                "message_center": false,
+                "messages": [
+                    {
+                        "id": 317653,
+                        "template": {
+                            "formats": [
+                                {
+                                    "name": "[0.675844806]Multi-Platform - Landscape",
+                                    "orientation": "landscape",
+                                    "language": "*",
+                                    "size": {
+                                        "w": {
+                                            "type": "number",
+                                            "value": 1730
+                                        },
+                                        "h": {
+                                            "type": "number",
+                                            "value": 1080
+                                        }
+                                    },
+                                    "images": [],
+                                    "buttons": [
+                                        {
+                                            "name": "Background",
+                                            "x": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "y": {
+                                                "type": "number",
+                                                "value": 0
+                                            },
+                                            "w": {
+                                                "type": "number",
+                                                "value": 1922
+                                            },
+                                            "h": {
+                                                "type": "number",
+                                                "value": 1298
+                                            },
+                                            "image_width": 2876,
+                                            "image_height": 1914,
+                                            "image_filename": "DSC_8339.jpg",
+                                            "type": {
+                                                "type": "text",
+                                                "value": "DISMISS"
+                                            },
+                                            "action": {
+                                                "type": "text",
+                                                "value": ""
+                                            },
+                                            "game_id": {
+                                                "type": "number",
+                                                "value": ""
+                                            },
+                                            "image_up": {
+                                                "type": "asset",
+                                                "value": "2dc2a6b159073a2e6f7bf1664eae7eac1b56c6d8"
+                                            }
+                                        }
+                                    ],
+                                    "scaled_by": 0.675844806,
+                                    "scaled_from": "Multi-Platform - Landscape",
+                                    "scale": 1
+                                }
+                            ]
+                        },
+                        "name": "Rachel Trigger Test",
+                        "rules": {
+                            "orientations": "landscape"
+                        },
+                        "priority": 9999
+                    }
+                ],
+                "subject": "Test triggers"
+            }
+        ],
+        "rules": {
+            "max_messages_per_session": 99999,
+            "delay_first_message": 0,
+            "min_delay_between_messages":0
+        },
+        "cdn_root": "http://content-cdn.swrve.com/messaging/message_image/",
+        "version": 2,
+        "game_data":{}
+    },
+    "flush_frequency": 60000,
+    "flush_refresh_delay": 1000
+}

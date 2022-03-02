@@ -1,0 +1,38 @@
+{
+    "name": "Button One",
+    "x": {
+        "type": "number",
+        "value": 351
+    },
+    "y": {
+        "type": "number",
+        "value": 412
+    },
+    "w": {
+        "type": "number",
+        "value": 162
+    },
+    "h": {
+        "type": "number",
+        "value": 81
+    },
+    "image_width": 618,
+    "image_height": 137,
+    "image_filename": "UpgradeNow.png",
+    "type": {
+        "type": "text",
+        "value": "CUSTOM"
+    },
+    "action": {
+        "type": "text",
+        "value": "https://www.google.com"
+    },
+    "game_id": {
+        "type": "number",
+        "value": ""
+    },
+    "image_up": {
+        "type": "asset",
+        "value": "fa9f4a3738a8dbbd63f16bb8d0061e66f33d243d"
+    }
+}

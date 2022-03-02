@@ -1,0 +1,38 @@
+{
+    "name": "Background",
+    "x": {
+        "type": "number",
+        "value": -8
+    },
+    "y": {
+        "type": "number",
+        "value": -109
+    },
+    "w": {
+        "type": "number",
+        "value": 1922
+    },
+    "h": {
+        "type": "number",
+        "value": 1298
+    },
+    "image_width": 1385,
+    "image_height": 862,
+    "image_filename": "media_image.png",
+    "type": {
+        "type": "text",
+        "value": "DISMISS"
+    },
+    "action": {
+        "type": "text",
+        "value": ""
+    },
+    "game_id": {
+        "type": "number",
+        "value": ""
+    },
+    "image_up": {
+        "type": "asset",
+        "value": "d31a9dcec7bb2c2a0bbd63451cea799fdb774d76"
+    }
+}

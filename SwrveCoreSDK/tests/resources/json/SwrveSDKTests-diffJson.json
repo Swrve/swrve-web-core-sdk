@@ -1,0 +1,38 @@
+[
+    {
+        "uid": "simpleevent.scene",
+        "item_class": "",
+        "diff": {
+            "background.color": {
+                "old": "#000000",
+                "new": "#ff0000"
+            },
+            "text.color": {
+                "old": "#FFFFFF",
+                "new": "#00ff00"
+            },
+            "text.size": {
+                "old": "12",
+                "new": "16"
+            },
+            "title.label": {
+                "old": "Simple Event",
+                "new": "Simple Event _Treat1"
+            }
+        }
+    },
+    {
+        "uid": "media.scene",
+        "item_class": "",
+        "diff": {
+            "body.label": {
+                "old": "This is the page that plays a movie trailer and allows the user to watch and mark as favourites",
+                "new": "This is a different video of rabbits"
+            },
+            "video.url": {
+                "old": "http://url_link",
+                "new": "http://test.url.rabbits/c7fc2c1f-0d06-4d41-bc96-596f15a739bf"
+            }
+        }
+    }
+]

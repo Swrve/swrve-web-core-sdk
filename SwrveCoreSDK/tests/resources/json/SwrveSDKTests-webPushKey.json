@@ -1,0 +1,5 @@
+{
+    "flush_frequency": 60000,
+    "flush_refresh_delay": 1000,
+    "web_push_public_key": "test_push_key"
+}
