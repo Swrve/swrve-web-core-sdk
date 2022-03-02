@@ -1,6 +1,6 @@
 {
   "name": "@swrve/web-core",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Swrve marketing engagement platform web core SDK",
   "keywords": [
     "swrve",
@@ -18,7 +18,9 @@
   "main": "dist/SwrveCoreSDK.js",
   "types": "dist/types/index.d.ts",
   "files": [
-    "dist"
+    "dist/SwrveCoreSDK.js",
+    "dist/types",
+    "dist/lib/src/**/*.js"
   ],
   "scripts": {
     "tsc": "tsc",
