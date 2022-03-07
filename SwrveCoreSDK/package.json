@@ -1,6 +1,6 @@
 {
   "name": "@swrve/web-core",
-  "version": "0.0.4",
+  "version": "1.0.0",
   "description": "Swrve marketing engagement platform web core SDK",
   "keywords": [
     "swrve",
@@ -46,7 +46,7 @@
     "worker-loader": "^2.0.0"
   },
   "dependencies": {
-    "@types/crypto-js": "^4.0.2",
-    "crypto-js": "^4.1.1"
+    "@types/crypto-js": "4.0.2",
+    "crypto-js": "4.1.1"
   }
 }
