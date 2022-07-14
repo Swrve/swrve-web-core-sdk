@@ -75,8 +75,5 @@ export const APP_ID_ERROR =
 export const INVALID_FUNCTION = "Please pass a valid function to $.";
 export const GET_INSTANCE_ERROR = "Please call SwrveCoreSDK.getInstance() first.";
 export const INVALID_EVENT_NAME = "Event name may not contain the word Swrve.";
-export const INVALID_EVENT_LENGTH =
-  "Event name may not be more than 191 characters.";
-export const INVALID_SPACES = "Event name may not include spaces.";
 export const NO_SYNCHRONOUS_STORAGE = "Local Storage is not available.";
 export const REQUIRED_DEPENDENCY_PLATFORM = "IPlatform implementation is a required dependency for Swrve SDK core."

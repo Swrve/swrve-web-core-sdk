@@ -1330,14 +1330,6 @@ export class Swrve {
     if (/[Ss]wrve/.exec(name)) {
       throw new Error(SwrveConstants.INVALID_EVENT_NAME);
     }
-
-    if (name.length > 191) {
-      throw new Error(SwrveConstants.INVALID_EVENT_LENGTH);
-    }
-
-    if (name.indexOf(" ") !== -1) {
-      throw new Error(SwrveConstants.INVALID_SPACES);
-    }
   }
 
   private checkFirstUserInitiated(): void {
