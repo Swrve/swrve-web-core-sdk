@@ -34,6 +34,7 @@ import { getStringSize } from "../utils/StringHelper";
 import HttpError from "../RestClient/HttpError";
 import { ISwrveMessage } from "../interfaces/ISwrveCampaign";
 import { IDictionary } from "..";
+import DateHelper from "../utils/DateHelper";
 
 const LOG_SOURCE_SDK = "sdk";
 const LOG_TYPE = "qa_log_event";
@@ -249,7 +250,7 @@ export class QALogging {
         type: "qa_log_event",
         log_type: "campaign-triggered",
         seqnum,
-        time: Date.now(),
+        time: DateHelper.nowInUtcTime(),
         log_source: "sdk",
         log_details: event,
       } as ICampaignTriggeredEvent;
@@ -270,7 +271,7 @@ export class QALogging {
         },
         seqnum,
         type: LOG_TYPE,
-        time: Date.now(),
+        time: DateHelper.nowInUtcTime(),
         log_type: "campaigns-downloaded",
       } as ICampaignsDownloadedEvent;
       this.queueQAEvent(logEvent);
@@ -300,7 +301,7 @@ export class QALogging {
         type: "qa_log_event",
         log_type: "campaign-button-clicked",
         seqnum,
-        time: Date.now(),
+        time: DateHelper.nowInUtcTime(),
         log_source: "sdk",
         log_details: {
           campaign_id,

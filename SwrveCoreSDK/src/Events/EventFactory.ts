@@ -181,7 +181,7 @@ export class EventFactory {
   ): IButtonClickedEvent {
     return {
       type: "event",
-      time: Date.now(),
+      time: DateHelper.nowInUtcTime(),
       seqnum,
       name: "Swrve.Messages.Message-" + message.id + ".click",
       payload: {
@@ -198,7 +198,7 @@ export class EventFactory {
   ): INamedEvent {
     return {
       type: "event",
-      time: Date.now(),
+      time: DateHelper.nowInUtcTime(),
       seqnum,
       name: "Swrve.Messages.Message-" + message.id + ".impression",
       payload,

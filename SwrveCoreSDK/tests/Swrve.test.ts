@@ -62,6 +62,7 @@ import resources = require("./resources/json/SwrveSDKTests-resources.json");
 import PlatformMock from "./mocks/PlatformMock";
 import { SWRVE_USER_ID } from "../src/utils/SwrveConstants";
 import IDictionary from "../src/interfaces/IDictionary";
+import DateHelper from "../src/utils/DateHelper";
 
 const pal = new PlatformMock();
 
@@ -161,7 +162,7 @@ describe("SWRVE SDK TESTS", () => {
   it("generate first Use timestamp ", () => {
     const expectedDate = new Date("2019-04-07T10:20:30Z").getTime();
 
-    Date.now = jest.fn(() => expectedDate);
+    DateHelper.nowInUtcTime = jest.fn(() => expectedDate);
     restClient.changeResponse({ json: () => passes });
     pal.synchronousStorage!.clear();
 

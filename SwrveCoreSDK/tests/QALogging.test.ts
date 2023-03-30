@@ -20,6 +20,7 @@ import {
   IQAUserUpdateEvent,
 } from "../src/interfaces/IQAEvents";
 import { ICampaignDownloadData } from "../src/Events/EventTypeInterfaces";
+import DateHelper from "../src/utils/DateHelper";
 
 const userId = "SwrveDevice";
 const configInterface = {
@@ -41,7 +42,7 @@ describe("QALogging: Create Events", () => {
   let subject: QALogging;
 
   beforeEach(() => {
-    Date.now = jest.fn(() => new Date("2019-04-07T10:20:30Z").getTime());
+    DateHelper.nowInUtcTime = jest.fn(() => new Date("2019-04-07T10:20:30Z").getTime());
     subject = new QALogging(restClient, config, profileManager, pal.deviceID);
     profileManager.setAsQAUser({
       reset_device_state: true,
@@ -54,7 +55,7 @@ describe("QALogging: Create Events", () => {
       "eventName",
       {},
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.namedEvent(namedEvent);
@@ -63,7 +64,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQANamedEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("event");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.name).toBe("eventName");
@@ -74,7 +75,7 @@ describe("QALogging: Create Events", () => {
     const userUpdate: any = factory.getUserUpdate(
       { key: "value" },
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.userUpdate(userUpdate);
@@ -83,7 +84,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQAUserUpdateEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("user");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.attributes).toEqual({ key: "value" });
@@ -94,7 +95,7 @@ describe("QALogging: Create Events", () => {
       "key",
       new Date("2019-05-07T10:20:30Z"),
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.userUpdateWithDate(userUpdateWithDate);
@@ -103,7 +104,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQAUserUpdateEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("user");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.attributes).toEqual({
@@ -115,7 +116,7 @@ describe("QALogging: Create Events", () => {
     const deviceUpdateEvent: any = factory.getDeviceUpdate(
       { a: "1", b: "2" },
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.deviceUpdate(deviceUpdateEvent);
@@ -124,7 +125,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQADeviceUpdateEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("device_update");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.attributes).toEqual({
@@ -140,7 +141,7 @@ describe("QALogging: Create Events", () => {
       111,
       2,
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.purchaseEvent(purchaseEvent);
@@ -149,7 +150,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQAPurchaseEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("purchase");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.item).toBe("keyName");
@@ -165,7 +166,7 @@ describe("QALogging: Create Events", () => {
       111,
       2,
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.purchaseEvent(purchaseEvent);
@@ -174,7 +175,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQAPurchaseEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("purchase");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.item).toBe("keyName");
@@ -191,7 +192,7 @@ describe("QALogging: Create Events", () => {
       12,
       "EUR",
       1,
-      Date.now(),
+      DateHelper.nowInUtcTime(),
       { testReward: reward }
     );
 
@@ -201,7 +202,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQAIAPEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("iap");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.app_store).toBe("unknown_store");
@@ -213,7 +214,7 @@ describe("QALogging: Create Events", () => {
   });
 
   it("Create QA Log of a sessionStart", () => {
-    const sessionStartEvent: any = factory.getStartSessionEvent(1, Date.now());
+    const sessionStartEvent: any = factory.getStartSessionEvent(1, DateHelper.nowInUtcTime());
     subject.sessionStart(sessionStartEvent);
 
     const queue = subject.getQueue();
@@ -221,7 +222,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQASessionStartEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("session_start");
     expect(result.log_details.seqnum).toBe(1);
   });
@@ -231,7 +232,7 @@ describe("QALogging: Create Events", () => {
       "gold",
       12,
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.currencyGivenEvent(currencyGivenEvent);
@@ -240,7 +241,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQACurrencyGivenEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.type).toBe("currency_given");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.given_amount).toBe(12);
@@ -264,7 +265,7 @@ describe("QALogging: Create Events", () => {
     expect(result).toBeTruthy();
     expect(result.log_type).toBe("campaign-triggered");
     expect(result.seqnum).toBe(1);
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_source).toBe("sdk");
     expect(result.log_details.event_name).toBe("eventName");
     expect(result.log_details.event_payload).toEqual({ key: "value" });
@@ -281,7 +282,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as ICampaignsDownloadedEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.log_details.campaigns).toEqual(campaignsDownloaded);
     expect(result.seqnum).toBe(1);
   });
@@ -293,7 +294,7 @@ describe("QALogging: Create Events", () => {
     const result = queue[0] as IQAButtonClickedEvent;
 
     expect(result).toBeTruthy();
-    expect(result.time).toBe(Date.now());
+    expect(result.time).toBe(DateHelper.nowInUtcTime());
     expect(result.seqnum).toBe(1);
     expect(result.log_details.campaign_id).toBe(222);
     expect(result.log_details.variant_id).toBe(2);
@@ -308,7 +309,7 @@ describe("QALogging: Create Events", () => {
       "eventName",
       {},
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.namedEvent(namedEvent);
@@ -322,7 +323,7 @@ describe("QALogging: Create Events", () => {
       "eventName",
       {},
       1,
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     subject.namedEvent(namedEvent);

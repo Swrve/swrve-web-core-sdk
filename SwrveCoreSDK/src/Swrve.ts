@@ -301,7 +301,7 @@ export class Swrve {
       keyName,
       payload,
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     this.queueEvent(evt);
@@ -319,7 +319,7 @@ export class Swrve {
       keyName,
       date,
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
     this.queueEvent(evt);
 
@@ -334,7 +334,7 @@ export class Swrve {
     const evt = this.eventFactory.getUserUpdate(
       attributes,
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime(),
     );
 
     this.queueEvent(evt);
@@ -358,7 +358,7 @@ export class Swrve {
       cost,
       quantity,
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime(),
     );
 
     this.queueEvent(evt);
@@ -382,7 +382,7 @@ export class Swrve {
       productPrice,
       currency,
       this.profileManager.getNextSequenceNumber(),
-      Date.now(),
+      DateHelper.nowInUtcTime(),
       rewards
     );
 
@@ -400,7 +400,7 @@ export class Swrve {
       currencyGiven,
       amount,
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     this.queueEvent(evt);
@@ -433,7 +433,7 @@ export class Swrve {
       eventName,
       {},
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     this.queueEvent(evt);
@@ -447,7 +447,7 @@ export class Swrve {
       eventName,
       {},
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     this.queueEvent(evt);
@@ -1035,7 +1035,7 @@ export class Swrve {
   private queueStartSessionEvent(): void {
     const event = this.eventFactory.getStartSessionEvent(
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
     this.queueEvent(event);
 
@@ -1339,7 +1339,7 @@ export class Swrve {
       currentUser.firstUse === undefined
     ) {
       SwrveLogger.debug("First session on device detected. logging...");
-      currentUser.firstUse = Date.now();
+      currentUser.firstUse = DateHelper.nowInUtcTime();
       if (this.identifiedOnAnotherDevice === false) {
         const evt = this.eventFactory.getFirstInstallEvent(
           currentUser.firstUse,
@@ -1358,7 +1358,7 @@ export class Swrve {
     }
 
     if (this.installDate.length < 1) {
-      this.installDate = getInstallDateFormat(Date.now());
+      this.installDate = getInstallDateFormat(DateHelper.nowInUtcTime());
       this.storageManager.saveData(
         "firstInstallDate",
         String(this.installDate)
@@ -1374,7 +1374,7 @@ export class Swrve {
     const evt = this.eventFactory.getDeviceUpdate(
       deviceProperties,
       this.profileManager.getNextSequenceNumber(),
-      Date.now()
+      DateHelper.nowInUtcTime()
     );
 
     this.queueEvent(evt);
