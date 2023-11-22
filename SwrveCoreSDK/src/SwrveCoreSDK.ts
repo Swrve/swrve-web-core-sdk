@@ -174,6 +174,10 @@ export class SwrveCoreSDK {
     SwrveCoreSDK.checkInstance().event(name, payload);
   }
 
+  public static deviceUpdate(attributes: IReadonlyDictionary<string | number>): void {
+    SwrveCoreSDK.checkInstance().deviceUpdate(attributes);
+  }
+
   public static userUpdate(
     attributes: IReadonlyDictionary<string | number | boolean>
   ): void {

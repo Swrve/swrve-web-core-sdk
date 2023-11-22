@@ -544,10 +544,10 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
-"@types/crypto-js@^4.0.2":
-  version "4.0.2"
-  resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-4.0.2.tgz#4524325a175bf819fec6e42560c389ce1fb92c97"
-  integrity sha512-sCVniU+h3GcGqxOmng11BRvf9TfN9yIs8KKjB8C8d75W69cpTfZG80gau9yTx5SxF3gvHGbJhdESzzvnjtf3Og==
+"@types/crypto-js@4.2.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-4.2.0.tgz#01918d35ec66aa806887435c44a67d7a749cf545"
+  integrity sha512-LW9TlhpMeoQKOu6I6HvOp7eInNNnvd7B+ndAfZb826HUl7eHJJApofbHnlAxrIVS/uiCjkkHGNEaKHoGxB5IHw==
 
 "@types/eslint-scope@^3.7.0":
   version "3.7.1"
@@ -1189,10 +1189,10 @@ cross-spawn@^7.0.3:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
-crypto-js@^4.1.1:
-  version "4.1.1"
-  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.1.1.tgz#9e485bcf03521041bd85844786b83fb7619736cf"
-  integrity sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw==
+crypto-js@4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.2.0.tgz#4d931639ecdfd12ff80e8186dba6af2c2e856631"
+  integrity sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==
 
 cssom@^0.4.4:
   version "0.4.4"

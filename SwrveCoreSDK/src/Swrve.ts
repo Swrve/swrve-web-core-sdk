@@ -92,7 +92,7 @@ export class Swrve {
   private campaignNetworkMonitorHandle?: NetworkListener;
   private identifiedOnAnotherDevice: boolean = false;
   private webPushApiKey: string = "";
-  
+
 
   public constructor(
     config: Readonly<ISwrveConfig>,
@@ -324,6 +324,22 @@ export class Swrve {
     this.queueEvent(evt);
 
     this.qaLogging.userUpdateWithDate(evt);
+  }
+
+  public deviceUpdate(
+    attributes: IReadonlyDictionary<string | number>
+  ): void {
+    if (this.pauseSDK) return;
+
+    const evt = this.eventFactory.getDeviceUpdate(
+      attributes,
+      this.profileManager.getNextSequenceNumber(),
+      DateHelper.nowInUtcTime(),
+    );
+
+    this.queueEvent(evt);
+
+    this.qaLogging.deviceUpdate(evt);
   }
 
   public userUpdate(

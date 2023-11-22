@@ -567,6 +567,7 @@ describe("SWRVE SDK TESTS", () => {
       sdk.stop();
 
       sdk.event("test", {});
+      sdk.deviceUpdate({web_push_token: "test"});
       sdk.iap(1, "sword", 5, "gold");
       sdk.userUpdate({ name: "test" });
       sdk.userUpdateWithDate("test", new Date());
@@ -602,6 +603,7 @@ describe("SWRVE SDK TESTS", () => {
 
       sdk.identify("", () => {}, () => {});
       sdk.event("test", {});
+      sdk.deviceUpdate({web_push_token: "test"});
       sdk.iap(1, "sword", 5, "gold");
       sdk.userUpdate({ name: "test" });
       sdk.userUpdateWithDate("test", new Date());
@@ -609,7 +611,7 @@ describe("SWRVE SDK TESTS", () => {
       sdk.purchase("sword", "gold", 10, 10);
 
       expect(sdk["pauseSDK"]).toBeFalsy;
-      expect(queueEvent.mock.calls.length).toBeGreaterThan(6);
+      expect(queueEvent.mock.calls.length).toBeGreaterThan(7);
       expect(sdk["eventLoopTimer"]).toBeGreaterThan(0);
 
       done();
@@ -631,6 +633,7 @@ describe("SWRVE SDK TESTS", () => {
       evtMgr.queueEvent = queueEvent;
 
       sdk.event("test", {});
+      sdk.deviceUpdate({web_push_token: "test"});
       sdk.iap(1, "sword", 5, "gold");
       sdk.userUpdate({ name: "test" });
       sdk.userUpdateWithDate("test", new Date());
@@ -638,9 +641,9 @@ describe("SWRVE SDK TESTS", () => {
       sdk.purchase("sword", "gold", 10, 10);
 
       const qaQueue = sdk.getQALogging().getQueue();
-      expect(queueEvent.mock.calls.length).toBe(6);
+      expect(queueEvent.mock.calls.length).toBe(7);
       // there will be more than 6 due to specific QA events.
-      expect(qaQueue.length).toBeGreaterThan(6);
+      expect(qaQueue.length).toBeGreaterThan(7);
 
       done();
     }, 1000);
@@ -886,7 +889,7 @@ describe("SWRVE SDK TESTS", () => {
     const personalizationProvider = (
       eventPayload: IDictionary<string>
     ): IDictionary<string> => {
-      
+
       expect(eventPayload).toBeDefined();
       return eventPayload;
     };
