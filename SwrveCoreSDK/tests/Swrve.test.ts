@@ -764,6 +764,71 @@ describe("SWRVE SDK TESTS", () => {
     }, 1000);
   });
 
+  it("Notification Delivery and Engagement Batch Events queue correctly", (done) => {
+    restClient.changeResponse({ json: () => qaUser });
+
+    const sdk = new Swrve(
+      { appId: 30512, apiKey: "1234" },
+      { restClient, platform: pal }
+    );
+    sdk.init();
+    setTimeout(() => {
+      const pushEvents = [
+        {
+          id: 1,
+          event_type: "swrve.push_received",
+          event: "Swrve.Messages.Push-1.delivered",
+          user_id: "4e56eddb-2930-4119-8f93-75304588a5ec",
+          timestamp: 1701873418769
+        },
+        {
+          id: 2,
+          event_type: "swrve.push_clicked",
+          event: "Swrve.Messages.Push-1.engaged",
+          user_id: "4e56eddb-2930-4119-8f93-75304588a5ec",
+          timestamp: 1701873421827
+        }
+      ];
+
+      sdk.enqueuePushEvents(pushEvents);
+
+      const eventQueue = sdk.getQueuedEvents();
+      const qaQueue = sdk.getQALogging().getQueue();
+
+      const deliveredEvents = eventQueue.filter(
+        (evt) =>
+          evt.type === "event" && evt.name === "Swrve.Messages.Push-1.delivered"
+      );
+      expect(deliveredEvents.length).toBe(1);
+
+      const deliveredQAEvents = qaQueue.filter(
+        (evt) =>
+          evt.type === "qa_log_event" &&
+          JSON.stringify(evt.log_details).indexOf(
+            "Swrve.Messages.Push-1.delivered"
+          ) !== -1
+      );
+      expect(deliveredQAEvents.length).toBe(1);
+
+      const engagedEvents = eventQueue.filter(
+        (evt) =>
+          evt.type === "event" && evt.name === "Swrve.Messages.Push-1.engaged"
+      );
+      expect(engagedEvents.length).toBe(1);
+
+      const engagedQAEvents = qaQueue.filter(
+        (evt) =>
+          evt.type === "qa_log_event" &&
+          JSON.stringify(evt.log_details).indexOf(
+            "Swrve.Messages.Push-1.engaged"
+          ) !== -1
+      );
+      expect(engagedQAEvents.length).toBe(1);
+
+      done();
+    }, 1000);
+  });
+
   it("Embedded Campaign callback API in config was fired on trigger", (done) => {
     restClient.changeResponse({ json: () => embeddedMessageTriggered });
 

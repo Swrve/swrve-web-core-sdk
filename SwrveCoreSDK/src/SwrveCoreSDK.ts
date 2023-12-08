@@ -12,6 +12,7 @@ import IDictionary from "./interfaces/IDictionary";
 import IReadonlyDictionary from "./interfaces/IReadonlyDictionary";
 import { GET_INSTANCE_ERROR } from "./utils/SwrveConstants";
 import IReward from "./interfaces/IReward";
+import IPushEvent from "./interfaces/IPushEvent";
 import { IPlatform } from "./interfaces/IPlatform";
 import SwrveEvent from "./WebApi/Events/SwrveEvent";
 
@@ -319,5 +320,9 @@ export class SwrveCoreSDK {
 
   public static notificationEngagedEvent(campaignId: number): void {
     SwrveCoreSDK.checkInstance().notificationEngagedEvent(campaignId);
+  }
+
+  public static enqueuePushEvents(events: IPushEvent[]): void {
+    SwrveCoreSDK.checkInstance().enqueuePushEvents(events);
   }
 }

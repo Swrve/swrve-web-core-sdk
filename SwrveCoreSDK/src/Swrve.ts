@@ -52,6 +52,7 @@ import {
 } from "./utils/SwrveConstants";
 import { IQueryParams } from "./interfaces/IQueryParams";
 import IRestClient from "./interfaces/IRestClient";
+import IPushEvent from "./interfaces/IPushEvent";
 import SwrveConfig from "./Config/SwrveConfig";
 import { generateUuid } from "./utils/uuid";
 import { QALogging } from "./Events/QALogging";
@@ -469,6 +470,21 @@ export class Swrve {
     this.queueEvent(evt);
 
     this.qaLogging.namedEvent(evt);
+  }
+
+  public enqueuePushEvents(events: IPushEvent[]): void {
+    events.forEach((evt) => {
+      const wrapped = this.eventFactory.getNamedEvent(
+        evt.event,
+        {},
+        this.profileManager.getNextSequenceNumber(),
+        evt.timestamp
+      );
+
+      this.queueEvent(wrapped);
+
+      this.qaLogging.namedEvent(wrapped);
+    })
   }
 
   //******************************************** Embedded Campaigns ********************************************/

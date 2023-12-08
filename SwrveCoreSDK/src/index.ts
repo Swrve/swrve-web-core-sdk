@@ -29,6 +29,7 @@ import { IUserInfo } from "./interfaces/IUser";
 import IDictionary from "./interfaces/IDictionary";
 import IReadonlyDictionary from "./interfaces/IReadonlyDictionary";
 import IReward from "./interfaces/IReward";
+import IPushEvent from "./interfaces/IPushEvent";
 import { IAsset } from "./interfaces/IAsset";
 import { IKeyMapping } from "./interfaces/IKeymapping";
 import { generateUuid } from "./utils/uuid";
@@ -59,6 +60,7 @@ export {
   SwrveResource,
   ISwrveMessage,
   IReward,
+  IPushEvent,
   IAsset,
   IKeyMapping,
   DevicePropertyName,
