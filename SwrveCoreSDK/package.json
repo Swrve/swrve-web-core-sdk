@@ -1,6 +1,6 @@
 {
   "name": "@swrve/web-core",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Swrve marketing engagement platform web core SDK",
   "keywords": [
     "swrve",
@@ -13,7 +13,7 @@
   ],
   "author": "Swrve Inc.",
   "license": "Apache-2.0",
-  "readme":"../README.md",
+  "readme": "../README.md",
   "homepage": "https://github.com/Swrve/swrve-web-core-sdk#readme",
   "main": "dist/SwrveCoreSDK.js",
   "types": "dist/types/index.d.ts",
@@ -37,13 +37,13 @@
     "@types/jest": "^27.0.3",
     "jest": "^27.3.1",
     "jest-junit": "^13.0.0",
-    "strip-loader": "^0.1.2",
+    "strip-loader": "0.1.2",
     "ts-jest": "^27.0.7",
     "ts-loader": "^9.2.6",
     "typescript": "^4.4.4",
-    "webpack": "^5.63.0",
-    "webpack-cli": "^4.9.1",
-    "worker-loader": "^2.0.0"
+    "webpack": "5.76.0",
+    "webpack-cli": "4.10.0",
+    "worker-loader": "2.0.0"
   },
   "dependencies": {
     "@types/crypto-js": "4.2.0",
