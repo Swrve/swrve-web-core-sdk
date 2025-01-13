@@ -59,7 +59,7 @@ export class SwrveCoreSDK {
     swrve = new Swrve(config, dependencies);
   }
 
-  public init(callback?:OnSwrveCoreReadyCallback): void {
+  public init(callback?: OnSwrveCoreReadyCallback): void {
     SwrveCoreSDK.checkInstance().init(callback);
   }
 
@@ -175,7 +175,9 @@ export class SwrveCoreSDK {
     SwrveCoreSDK.checkInstance().event(name, payload);
   }
 
-  public static deviceUpdate(attributes: IReadonlyDictionary<string | number>): void {
+  public static deviceUpdate(
+    attributes: IReadonlyDictionary<string | number>
+  ): void {
     SwrveCoreSDK.checkInstance().deviceUpdate(attributes);
   }
 
@@ -312,14 +314,6 @@ export class SwrveCoreSDK {
 
   public static getWebPushApiKey(): string {
     return SwrveCoreSDK.checkInstance().getWebPushApiKey();
-  }
-
-  public static notificationDeliveredEvent(campaignId: number): void {
-    SwrveCoreSDK.checkInstance().notificationDeliveredEvent(campaignId);
-  }
-
-  public static notificationEngagedEvent(campaignId: number): void {
-    SwrveCoreSDK.checkInstance().notificationEngagedEvent(campaignId);
   }
 
   public static enqueuePushEvents(events: IPushEvent[]): void {

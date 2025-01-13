@@ -567,7 +567,7 @@ describe("SWRVE SDK TESTS", () => {
       sdk.stop();
 
       sdk.event("test", {});
-      sdk.deviceUpdate({web_push_token: "test"});
+      sdk.deviceUpdate({ web_push_token: "test" });
       sdk.iap(1, "sword", 5, "gold");
       sdk.userUpdate({ name: "test" });
       sdk.userUpdateWithDate("test", new Date());
@@ -601,9 +601,13 @@ describe("SWRVE SDK TESTS", () => {
 
       expect(sdk["pauseSDK"]).toBeTruthy;
 
-      sdk.identify("", () => {}, () => {});
+      sdk.identify(
+        "",
+        () => {},
+        () => {}
+      );
       sdk.event("test", {});
-      sdk.deviceUpdate({web_push_token: "test"});
+      sdk.deviceUpdate({ web_push_token: "test" });
       sdk.iap(1, "sword", 5, "gold");
       sdk.userUpdate({ name: "test" });
       sdk.userUpdateWithDate("test", new Date());
@@ -633,7 +637,7 @@ describe("SWRVE SDK TESTS", () => {
       evtMgr.queueEvent = queueEvent;
 
       sdk.event("test", {});
-      sdk.deviceUpdate({web_push_token: "test"});
+      sdk.deviceUpdate({ web_push_token: "test" });
       sdk.iap(1, "sword", 5, "gold");
       sdk.userUpdate({ name: "test" });
       sdk.userUpdateWithDate("test", new Date());
@@ -710,60 +714,6 @@ describe("SWRVE SDK TESTS", () => {
     }, 100);
   });
 
-  it("Notification Delivery and Engagement Events queue correctly", (done) => {
-    restClient.changeResponse({ json: () => qaUser });
-
-    const sdk = new Swrve(
-      { appId: 30512, apiKey: "1234" },
-      { restClient, platform: pal }
-    );
-    sdk.init();
-
-    setTimeout(() => {
-      // send both of the QA events
-      sdk.notificationDeliveredEvent(1);
-      sdk.notificationEngagedEvent(1);
-
-      const eventQueue = sdk.getQueuedEvents();
-      const qaQueue = sdk.getQALogging().getQueue();
-
-      expect(eventQueue.length).toBe(3);
-      expect(qaQueue.length).toBe(4);
-
-      const deliveredEvents = eventQueue.filter(
-        (evt) =>
-          evt.type === "event" && evt.name === "Swrve.Messages.Push-1.delivered"
-      );
-      expect(deliveredEvents.length).toBe(1);
-
-      const deliveredQAEvents = qaQueue.filter(
-        (evt) =>
-          evt.type === "qa_log_event" &&
-          JSON.stringify(evt.log_details).indexOf(
-            "Swrve.Messages.Push-1.delivered"
-          ) !== -1
-      );
-      expect(deliveredQAEvents.length).toBe(1);
-
-      const engagedEvents = eventQueue.filter(
-        (evt) =>
-          evt.type === "event" && evt.name === "Swrve.Messages.Push-1.engaged"
-      );
-      expect(engagedEvents.length).toBe(1);
-
-      const engagedQAEvents = qaQueue.filter(
-        (evt) =>
-          evt.type === "qa_log_event" &&
-          JSON.stringify(evt.log_details).indexOf(
-            "Swrve.Messages.Push-1.engaged"
-          ) !== -1
-      );
-      expect(engagedQAEvents.length).toBe(1);
-
-      done();
-    }, 1000);
-  });
-
   it("Notification Delivery and Engagement Batch Events queue correctly", (done) => {
     restClient.changeResponse({ json: () => qaUser });
 
@@ -778,16 +728,18 @@ describe("SWRVE SDK TESTS", () => {
           id: 1,
           event_type: "swrve.push_received",
           event: "Swrve.Messages.Push-1.delivered",
+          payload: {},
           user_id: "4e56eddb-2930-4119-8f93-75304588a5ec",
-          timestamp: 1701873418769
+          timestamp: 1701873418769,
         },
         {
           id: 2,
           event_type: "swrve.push_clicked",
           event: "Swrve.Messages.Push-1.engaged",
+          payload: {},
           user_id: "4e56eddb-2930-4119-8f93-75304588a5ec",
-          timestamp: 1701873421827
-        }
+          timestamp: 1701873421827,
+        },
       ];
 
       sdk.enqueuePushEvents(pushEvents);
@@ -954,7 +906,6 @@ describe("SWRVE SDK TESTS", () => {
     const personalizationProvider = (
       eventPayload: IDictionary<string>
     ): IDictionary<string> => {
-
       expect(eventPayload).toBeDefined();
       return eventPayload;
     };
@@ -969,7 +920,7 @@ describe("SWRVE SDK TESTS", () => {
         appId: 30512,
         apiKey: "1234",
         embeddedMessageConfig,
-        personalizationProvider
+        personalizationProvider,
       },
       { restClient, platform: pal }
     );
@@ -998,7 +949,7 @@ describe("SWRVE SDK TESTS", () => {
       var embeddedConfig = sdk.getConfig().embeddedMessageConfig;
       expect(embeddedConfig).toBeDefined();
 
-      sdk.event("embedded.trigger", {"payload_key": "payload_value"});
+      sdk.event("embedded.trigger", { payload_key: "payload_value" });
 
       expect(embeddedCallback.mock.calls.length).toBe(1);
 

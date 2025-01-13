@@ -94,7 +94,6 @@ export class Swrve {
   private identifiedOnAnotherDevice: boolean = false;
   private webPushApiKey: string = "";
 
-
   public constructor(
     config: Readonly<ISwrveConfig>,
     dependencies: IDependencies
@@ -327,15 +326,13 @@ export class Swrve {
     this.qaLogging.userUpdateWithDate(evt);
   }
 
-  public deviceUpdate(
-    attributes: IReadonlyDictionary<string | number>
-  ): void {
+  public deviceUpdate(attributes: IReadonlyDictionary<string | number>): void {
     if (this.pauseSDK) return;
 
     const evt = this.eventFactory.getDeviceUpdate(
       attributes,
       this.profileManager.getNextSequenceNumber(),
-      DateHelper.nowInUtcTime(),
+      DateHelper.nowInUtcTime()
     );
 
     this.queueEvent(evt);
@@ -351,7 +348,7 @@ export class Swrve {
     const evt = this.eventFactory.getUserUpdate(
       attributes,
       this.profileManager.getNextSequenceNumber(),
-      DateHelper.nowInUtcTime(),
+      DateHelper.nowInUtcTime()
     );
 
     this.queueEvent(evt);
@@ -375,7 +372,7 @@ export class Swrve {
       cost,
       quantity,
       this.profileManager.getNextSequenceNumber(),
-      DateHelper.nowInUtcTime(),
+      DateHelper.nowInUtcTime()
     );
 
     this.queueEvent(evt);
@@ -444,47 +441,18 @@ export class Swrve {
     return this.evtManager.getAllQueuedEvents(this.profileManager.userId);
   }
 
-  public notificationEngagedEvent(campaignId: number): void {
-    const eventName = `Swrve.Messages.Push-${campaignId}.engaged`;
-    const evt = this.eventFactory.getNamedEvent(
-      eventName,
-      {},
-      this.profileManager.getNextSequenceNumber(),
-      DateHelper.nowInUtcTime()
-    );
-
-    this.queueEvent(evt);
-
-    this.qaLogging.namedEvent(evt);
-  }
-
-  public notificationDeliveredEvent(campaignId: number): void {
-    const eventName = `Swrve.Messages.Push-${campaignId}.delivered`;
-    const evt = this.eventFactory.getNamedEvent(
-      eventName,
-      {},
-      this.profileManager.getNextSequenceNumber(),
-      DateHelper.nowInUtcTime()
-    );
-
-    this.queueEvent(evt);
-
-    this.qaLogging.namedEvent(evt);
-  }
-
   public enqueuePushEvents(events: IPushEvent[]): void {
     events.forEach((evt) => {
       const wrapped = this.eventFactory.getNamedEvent(
         evt.event,
-        {},
+        evt.payload,
         this.profileManager.getNextSequenceNumber(),
         evt.timestamp
       );
 
       this.queueEvent(wrapped);
-
       this.qaLogging.namedEvent(wrapped);
-    })
+    });
   }
 
   //******************************************** Embedded Campaigns ********************************************/
