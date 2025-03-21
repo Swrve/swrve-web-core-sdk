@@ -9,8 +9,10 @@ import {
   GLOBAL_CAMPAIGN_THROTTLE_RECENT,
   CAMPAIGN_MATCH,
   CAMPAIGN_NO_MATCH,
-  SWRVE_OVERLAY_CONTAINER,
+  CAMPAIGN_NOT_DOWNLOADED,
+  CAMPAIGN_COULD_NOT_PERSONALIZE,
 } from "../src/utils/SwrveConstants";
+import { SWRVE_IAM_OVERLAY } from "../src/Campaigns/Messages/SwrveInAppConstants";
 import {
   ISwrveCampaignResourceResponse,
   ISwrveEmbeddedMessage,
@@ -22,8 +24,6 @@ import { Swrve } from "../src/Swrve";
 import { EventManager } from "../src/Events/EventManager";
 import { StorageManager } from "../src/Storage/StorageManager";
 import { ProfileManager } from "../src/Profile/ProfileManager";
-import SwrveLogger from "../src/utils/SwrveLogger";
-import { SWRVE_IAM_CONTAINER } from "../src/utils/SwrveConstants";
 import SwrveEvent from "./WebApi/Events/SwrveEvent";
 import { MockSwrveRestClient } from "./mocks/MockSwrveRestClient";
 import PlatformMock from "./mocks/PlatformMock";
@@ -83,6 +83,11 @@ const tooManyCampaign: ISwrveCampaignResourceResponse = _tooManyCampaign as any;
 tooManyCampaign.campaigns.campaigns[0].start_date = Date.now() - twoDays;
 tooManyCampaign.campaigns.campaigns[0].end_date = Date.now() + twoDays;
 
+import _personalizationFailed = require("./resources/json/CampaignManagerRulesTests-personalizationFailed.json");
+const personalizationFailed: ISwrveCampaignResourceResponse = _personalizationFailed as any;
+personalizationFailed.campaigns.campaigns[0].start_date = Date.now() - twoDays;
+personalizationFailed.campaigns.campaigns[0].end_date = Date.now() + twoDays;
+
 import _tooSoonSinceLastCampaign = require("./resources/json/CampaignManagerRulesTests-tooSoonSinceLastCampaign.json");
 const tooSoonSinceLastCampaign: ISwrveCampaignResourceResponse =
   _tooSoonSinceLastCampaign as any;
@@ -129,6 +134,8 @@ priorityShowing.campaigns.campaigns[1].start_date = Date.now() - twoDays;
 priorityShowing.campaigns.campaigns[1].end_date = Date.now() + twoDays;
 
 import _priorityEmbeddedAndIAM = require("./resources/json/CampaignManagerRulesTests-priorityEmbeddedIAM.json");
+import HTMLSwrveInAppElement from "../src/Campaigns/Messages/HTMLSwrveInAppElement";
+
 const embeddedAndIAMSharedPriority: ISwrveCampaignResourceResponse =
   _priorityEmbeddedAndIAM as any;
 embeddedAndIAMSharedPriority.campaigns.campaigns[0].start_date =
@@ -179,17 +186,9 @@ profileManager.setAsQAUser({
 
 // end setup
 
-const moveIAMOffscreen = () => {
-  const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-
-  if (container) {
-    container.style.left = "-10000px";
-  }
-};
-
 const IAMExists = () => {
-  const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-  expect(container).not.toBeNull();
+  const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+  expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
 };
 
 jest.spyOn(SwrveCoreSDK, "getPlatform").mockReturnValue(new PlatformMock());
@@ -229,7 +228,7 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
 
   it("Campaign - no triggers match by name", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    cm.storeCampaigns(noNameMatches, () => {
+    cm.storeCampaigns(noNameMatches, {}, () => {
       const { campaignFailCode } = cm.checkTriggers(
         "tv.event_simple",
         {},
@@ -257,7 +256,7 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
 
     const cm = new CampaignManager(profileManager, pal, storageManager);
 
-    cm.storeCampaigns(notStarted, () => {
+    cm.storeCampaigns(notStarted, {}, () => {
       const { campaignFailCode } = cm.checkTriggers(
         "tv.event_simple",
         {},
@@ -272,7 +271,7 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
   it("Campaign - campaign has ended", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
 
-    cm.storeCampaigns(ended, () => {
+    cm.storeCampaigns(ended, {}, () => {
       const { campaignFailCode } = cm.checkTriggers(
         "tv.event_simple",
         {},
@@ -287,7 +286,7 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
   it("Campaign - too soon since startup campaign rule", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
 
-    cm.storeCampaigns(tooSoonCampaign, () => {
+    cm.storeCampaigns(tooSoonCampaign, {}, () => {
       const { campaignFailCode } = cm.checkTriggers(
         "tv.event_simple",
         {},
@@ -301,13 +300,8 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
 
   it("Campaign - shown too many times campaign", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
-
-    cm.storeCampaigns(tooManyCampaign, () => {
+    cm.storeCampaigns(tooManyCampaign, {}, () => {
       cm.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
       IAMExists();
 
       const { campaignFailCode } = cm.checkTriggers(
@@ -321,15 +315,44 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
     });
   });
 
+  it("Campaign - cannot resolve personalization on button", function (done: () => void): void {
+    const cm = new CampaignManager(profileManager, pal, storageManager);
+    cm.storeCampaigns(personalizationFailed, {}, ()=> {
+      setTimeout(() => {
+        const { campaignFailCode } = cm.checkTriggers(
+          "tv.event_simple",
+          {},
+          impressionHandler,
+          true,
+          {"user.swrve.test": "passed"},
+        );
+        expect(campaignFailCode).toBe(CAMPAIGN_COULD_NOT_PERSONALIZE);
+        done();
+      }, 500);
+    });
+  });
+
+  it("Campaign - cannot resolve personalization on image", function (done: () => void): void {
+    const cm = new CampaignManager(profileManager, pal, storageManager);
+    cm.storeCampaigns(personalizationFailed, {}, ()=> {
+      setTimeout(() => {
+        const { campaignFailCode } = cm.checkTriggers(
+          "tv.event_simple",
+          {},
+          impressionHandler,
+          true,
+          {"user.testvalues": "values"},
+        );
+        expect(campaignFailCode).toBe(CAMPAIGN_COULD_NOT_PERSONALIZE);
+        done();
+      }, 500);
+    });
+  });
+
   it("Campaign - too soon since last display", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
-
-    cm.storeCampaigns(tooSoonSinceLastCampaign, () => {
+    cm.storeCampaigns(tooSoonSinceLastCampaign, {}, () => {
       cm.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
 
       setTimeout(() => {
         const { campaignFailCode } = cm.checkTriggers(
@@ -338,22 +361,17 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
           impressionHandler,
           true
         );
-        moveIAMOffscreen();
         expect(campaignFailCode).toBe(CAMPAIGN_THROTTLE_RECENT);
         done();
       }, 500);
     });
   });
 
-  it("Global = too many shown in session", function (done: () => void): void {
+  it("Global - too many shown in session", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
 
-    cm.storeCampaigns(tooManyGlobal, () => {
+    cm.storeCampaigns(tooManyGlobal, {}, () => {
       cm.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
       IAMExists();
 
       const { campaignFailCode } = cm.checkTriggers(
@@ -368,13 +386,9 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
   });
 
   it("Global - too soon from session start", function (done: () => void): void {
-    SwrveLogger.info("************************************** TEST B");
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
 
-    cm.storeCampaigns(tooSoonGlobal, () => {
+    cm.storeCampaigns(tooSoonGlobal, {}, () => {
       const { campaignFailCode } = cm.checkTriggers(
         "tv.event_simple",
         {},
@@ -388,13 +402,8 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
 
   it("Global - too soon since last display", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
-
-    cm.storeCampaigns(tooSoonSinceLastCampaignGlobal, () => {
+    cm.storeCampaigns(tooSoonSinceLastCampaignGlobal, {}, () => {
       cm.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
 
       setTimeout(() => {
         const { campaignFailCode } = cm.checkTriggers(
@@ -403,7 +412,6 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
           impressionHandler,
           true
         );
-        moveIAMOffscreen();
         expect(campaignFailCode).toBe(GLOBAL_CAMPAIGN_THROTTLE_RECENT);
         done();
       }, 500);
@@ -412,11 +420,7 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
 
   it("handles multiple matching campaigns", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
-
-    cm.storeCampaigns(multipleMatches, () => {
+    cm.storeCampaigns(multipleMatches, {}, () => {
       const { campaignFailCode, campaigns } = cm.checkTriggers(
         "tv.event_simple",
         {},
@@ -429,25 +433,30 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
     });
   });
 
+
   it("shows priority 1 campaign once, then shows priority 2 campaign", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
 
-    cm.storeCampaigns(priorityShowing, () => {
-      cm.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
+    let currentMessageName = "";
 
-      let container = document.getElementById(SWRVE_IAM_CONTAINER);
-      expect(container!.className).toBe("IAM1");
+    const localImpressionHandler = (msg: ISwrveMessage) => {
+      currentMessageName = msg.name;
+    };
+
+    cm.storeCampaigns(priorityShowing, {}, () => {
+      cm.checkTriggers("tv.event_simple", {}, localImpressionHandler, true);
+
+      let iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
+      
+      expect(currentMessageName).toBe("IAM1");
       cm.closeMessage();
 
-      cm.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      container = document.getElementById(SWRVE_IAM_CONTAINER);
-      moveIAMOffscreen();
-
-      expect(container!.className).toBe("IAM2");
+      cm.checkTriggers("tv.event_simple", {}, localImpressionHandler, true);
+      iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
+      
+      expect(currentMessageName).toBe("IAM2");
       cm.closeMessage();
 
       done();
@@ -456,19 +465,15 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
 
   it("shares the same priority queue between IAM and embedded", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
 
     const mockEmbeddedCallback = jest.fn();
     cm.onEmbeddedMessage(mockEmbeddedCallback);
 
-    cm.storeCampaigns(embeddedAndIAMSharedPriority, () => {
+    cm.storeCampaigns(embeddedAndIAMSharedPriority, {}, () => {
       cm.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
-
-      let container = document.getElementById(SWRVE_IAM_CONTAINER);
-      expect(container!.className).toBe("IAM1");
+      
+      let iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
       cm.closeMessage();
 
       expect(mockEmbeddedCallback.mock.calls.length).toBe(0);
@@ -484,13 +489,10 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
     });
   });
 
-  it("passes all tests and is triggered!", function (done: () => void): void {
+  it("passes all tests and is triggered", function (done: () => void): void {
     const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
 
-    cm.storeCampaigns(passes, () => {
+    cm.storeCampaigns(passes, {}, () => {
       const { campaignFailCode } = cm.checkTriggers(
         "tv.event_simple",
         {},
@@ -498,23 +500,6 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
         true
       );
       expect(campaignFailCode).toBe(CAMPAIGN_MATCH);
-      moveIAMOffscreen();
-      done();
-    });
-  });
-
-  it("calls back to installed messageListener", function (done: () => void): void {
-    const cm = new CampaignManager(profileManager, pal, storageManager);
-    jest
-      .spyOn(cm.getAssetManager(), "checkAssetsForCampaign")
-      .mockReturnValue(true);
-
-    cm.storeCampaigns(passes, () => {
-      cm.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
-    });
-    cm.onMessage((msg: ISwrveMessage) => {
-      expect(msg.id).toEqual(317653);
       done();
     });
   });
@@ -537,7 +522,7 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
       EventManager.prototype.queueEvent.call(eventManager, evt);
     };
 
-    const iamContainer = document.getElementById(SWRVE_OVERLAY_CONTAINER);
+    const iamContainer = document.getElementById(SWRVE_IAM_OVERLAY);
     if (iamContainer) {
       document.body.removeChild(iamContainer);
     }
@@ -555,7 +540,6 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
       expect(impressionEvents.length).toBeGreaterThan(0);
       expect(sdk["autoShowEnabled"]).toBe(false);
       IAMExists();
-      moveIAMOffscreen();
       sdk.shutdown();
       done();
     }, 1800);
@@ -607,11 +591,9 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
     const storage = pal.synchronousStorage;
     if (storage) {
       storage.clear();
-    } else {
-      SwrveLogger.error("No Local Storage");
-    }
+    } 
 
-    const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
+    const container = document.getElementById(SWRVE_IAM_OVERLAY);
     if (container) {
       document.body.removeChild(container);
     }

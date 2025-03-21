@@ -1,6 +1,7 @@
 import { IKeyMapping } from "./IKeymapping";
 import { IAsset } from "./IAsset";
 import IDictionary from "./IDictionary";
+import { ISwrveAsset } from "./ISwrveCampaign";
 
 export interface IPlatformName {
   readonly name: string;
@@ -98,6 +99,8 @@ export interface IPlatform {
   supportsHDR(): boolean;
 
   getKeymapping(): IKeyMapping;
+
+  checkStorageForAsset(asset: ISwrveAsset): boolean;
 
   downloadAssets(assets: ReadonlyArray<IAsset>): Promise<void>;
 

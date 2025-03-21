@@ -1,5 +1,6 @@
 const path = require("path");
 module.exports = function (env) {
+  process.noDeprecation = true
   env = env || {};
   return {
     mode: "development",

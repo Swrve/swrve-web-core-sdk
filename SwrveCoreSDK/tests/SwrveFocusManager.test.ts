@@ -1,4 +1,4 @@
-import SwrveFocusManager from "../src/UIElements/SwrveFocusManager";
+import SwrveFocusManager from "../src/Campaigns/Messages/UIElements/SwrveFocusManager";
 
 describe("SwrveFocusManager", () => {
   it("cycles through items", () => {

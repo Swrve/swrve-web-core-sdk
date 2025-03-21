@@ -33,7 +33,7 @@ export class EventManager {
   }
 
   public queueEvent(evt: SwrveEvent): void {
-    SwrveLogger.debug("QUEUE EVENT", evt);
+    SwrveLogger.debug("queue event", evt);
     this.queue.push(evt);
     this.calculateQueueSize(evt);
   }

@@ -12,10 +12,10 @@ export class AssetManager {
     for (const asset of newAssets) {
       const key = asset.getAssetID();
       if (this.assets[key] === undefined) {
-        SwrveLogger.info("ASSET MANAGER: add new asset " + key);
+        SwrveLogger.info("add new asset " + key);
         this.assets[key] = {
           id: key,
-          path: this._imagesCDN + asset.getAssetPath().toString(),
+          path: asset.getAssetPath().toString()
         };
       }
     }
@@ -59,21 +59,11 @@ export class AssetManager {
   }
 
   private checkCache(asset: ISwrveAsset): boolean {
-    const loadedImage = document.createElement("img");
-    loadedImage.src = this._imagesCDN + asset.getAssetPath();
-
-    const element = document.getElementById("PALImageCache");
-    if (element) {
-      element.appendChild(loadedImage);
-    } else {
-      SwrveLogger.info("PALImage Cache does not exist");
-    }
-
-    return loadedImage.complete || loadedImage.width + loadedImage.height > 0;
+    return PAL.getPlatform().checkStorageForAsset(asset);
   }
 
   private downloadAssets(): Promise<void> {
-    SwrveLogger.info("Asset Manager download assets");
+    SwrveLogger.info("download assets");
     const values = Object.keys(this.assets).map((key) => this.assets[key]);
     return PAL.getPlatform().downloadAssets(values);
   }

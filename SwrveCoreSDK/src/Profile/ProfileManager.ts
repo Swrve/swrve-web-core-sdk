@@ -53,7 +53,7 @@ export class ProfileManager {
       SwrveLogger.debug(`current time ${now}`);
       SwrveLogger.debug(`lastSession: ${lastSession}`);
       const diffTime: number = now - lastSession;
-      SwrveLogger.debug(`Diff now - lastSession: ${diffTime}`);
+      SwrveLogger.debug(`diff now - lastSession: ${diffTime}`);
       if (lastSession && diffTime > expirationTimeout) {
         SwrveLogger.debug('session has expired.');
         return false;
@@ -196,7 +196,7 @@ export class ProfileManager {
 
   public storeEtagHeader(etag: string): void {
     SwrveLogger.info(
-      "New Etag " + etag + " Old etag " + this._currentUser.etag
+      "new Etag " + etag + " old etag " + this._currentUser.etag
     );
     this._currentUser.etag = etag;
     this.storageManager.saveData(

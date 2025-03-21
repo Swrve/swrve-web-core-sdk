@@ -1,5 +1,8 @@
 const path = require("path");
+const TerserPlugin = require("terser-webpack-plugin");
+
 module.exports = function (env) {
+  process.noDeprecation = true;
   env = env || {};
   return {
     mode: "production",
@@ -19,20 +22,7 @@ module.exports = function (env) {
                 },
               },
             },
-          ].concat(
-            [
-              {
-                loader: "strip-loader",
-                options: {
-                  strip: [
-                    "SwrveLogger.debug",
-                    "SwrveLogger.info",
-                    "SwrveLogger.warn",
-                  ],
-                },
-              }
-            ]
-          ),
+          ],
         },
       ],
     },
@@ -44,6 +34,22 @@ module.exports = function (env) {
       path: path.resolve(__dirname, "dist"),
       library: "SwrveCoreSDK",
       libraryTarget: "umd",
+      globalObject: 'this',
+    },
+    optimization: {
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            compress: {
+              pure_funcs: [
+                "SwrveLogger.debug",
+                "SwrveLogger.info",
+                "SwrveLogger.warn",
+              ],
+            },
+          },
+        }),
+      ],
     },
   };
 };

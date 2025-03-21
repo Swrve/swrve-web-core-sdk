@@ -61,7 +61,7 @@ export class QALogging {
   }
 
   public startQALogTimer() {
-    SwrveLogger.debug("Started QA Logging...");
+    SwrveLogger.debug("started QA Logging...");
     this.qaLogTimer = setInterval(
       () => this.sendQueue(),
       this.qaLogFlushFrequencyMilliseconds
@@ -69,7 +69,7 @@ export class QALogging {
   }
 
   public stopQALogTimer() {
-    SwrveLogger.debug("Stopped QA Logging...");
+    SwrveLogger.debug("stopped QA Logging...");
     clearInterval(this.qaLogTimer);
   }
 
@@ -325,7 +325,7 @@ export class QALogging {
 
     if (eventsToSend.length > 0) {
       this.clearQueue();
-      SwrveLogger.debug("Sending QA Log Queue", eventsToSend);
+      SwrveLogger.debug("sending QA Log Queue", eventsToSend);
 
       return this.postQueuedQAEvents(eventsToSend)
         .then(() => {

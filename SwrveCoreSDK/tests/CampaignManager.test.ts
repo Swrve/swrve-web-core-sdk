@@ -6,14 +6,15 @@ import {
 import { StorageManager } from "../src/Storage/StorageManager";
 import { ProfileManager } from "../src/Profile/ProfileManager";
 import { SwrveCoreSDK } from "../src/SwrveCoreSDK";
+import HTMLSwrveInAppElement from "../src/Campaigns/Messages/HTMLSwrveInAppElement";
 import {
-  SWRVE_IAM_CONTAINER,
   CAMPAIGN_STATE,
   CAMPAIGNS,
 } from "../src/utils/SwrveConstants";
 import { Swrve } from "../src/Swrve";
 import { MockSwrveRestClient } from "./mocks/MockSwrveRestClient";
 import PlatformMock from "./mocks/PlatformMock";
+
 
 const twoDays = 172800000;
 
@@ -31,12 +32,23 @@ import _campaignsOnly = require("./resources/json/CampaignManagerTests-campaigns
 const campaignsOnly: ISwrveCampaignResourceResponse = _campaignsOnly as any;
 
 import _embeddedMessageCenter = require("./resources/json/CampaignManagerTests-embeddedMessageCenter.json");
-const embeddedMessageCenter: ISwrveCampaignResourceResponse = _embeddedMessageCenter as any;
+const embeddedMessageCenter: ISwrveCampaignResourceResponse =
+  _embeddedMessageCenter as any;
 
 import _passes = require("./resources/json/CampaignManagerTests-passes.json");
 const passes: ISwrveCampaignResourceResponse = _passes as any;
 passes.campaigns.campaigns[0].start_date = Date.now() - twoDays;
 passes.campaigns.campaigns[0].end_date = Date.now() + twoDays;
+
+import _personalizedIAMMC = require ("./resources/json/CampaignManagerTests-messageCenterPersonalized.json");
+const personalizedIAMMC: ISwrveCampaignResourceResponse = _personalizedIAMMC as any;
+
+personalizedIAMMC.campaigns.campaigns[0].start_date = Date.now() - twoDays;
+personalizedIAMMC.campaigns.campaigns[0].end_date = Date.now() + twoDays;
+personalizedIAMMC.campaigns.campaigns[1].start_date = Date.now() - twoDays;
+personalizedIAMMC.campaigns.campaigns[1].end_date = Date.now() + twoDays;
+personalizedIAMMC.campaigns.campaigns[2].start_date = Date.now() - twoDays;
+personalizedIAMMC.campaigns.campaigns[2].end_date = Date.now() + twoDays;
 
 /* setup global variables */
 let platform = new PlatformMock();
@@ -62,14 +74,6 @@ profileManager.setAsQAUser({
   logging: true,
 });
 
-const moveIAMOffscreen = () => {
-  const container = document.getElementById(SWRVE_IAM_CONTAINER);
-
-  if (container) {
-    container.style.left = "-10000px";
-  }
-};
-
 const setUpCampaignManagerWithData = (initialData: any) => {
   const campaignManager = new CampaignManager(
     profileManager,
@@ -78,7 +82,7 @@ const setUpCampaignManagerWithData = (initialData: any) => {
   );
 
   if (initialData) {
-    campaignManager.storeCampaigns(initialData, () => {});
+    campaignManager.storeCampaigns(initialData, {}, () => {});
   }
 
   return campaignManager;
@@ -118,7 +122,7 @@ describe("CAMPAIGN MANAGER TESTS", () => {
       expect(json["298948"]).not.toBeUndefined();
     }
 
-    subject.storeCampaigns(changedData, () => {});
+    subject.storeCampaigns(changedData, {}, () => {});
     storedState = storageManager.getData(`campaignState${user.userId}`);
 
     if (storedState) {
@@ -184,6 +188,14 @@ describe("CAMPAIGN MANAGER TESTS", () => {
     expect(subject.getMessageCenterCampaigns()).toHaveLength(0);
   });
 
+  it("Gets only message center campaigns which can render", () => {
+    const subject = setUpCampaignManagerWithData(personalizedIAMMC);
+    expect(subject.getMessageCenterCampaigns()).toHaveLength(1);
+
+    // pass in the the value needed to personalize
+    expect(subject.getMessageCenterCampaigns({"successfullypersonalized" : "passing"})).toHaveLength(3);
+  });
+
   it("Can be marked as seen", () => {
     const subject = setUpCampaignManagerWithData(data);
     const campaign = subject.getMessageCenterCampaigns()[0];
@@ -194,19 +206,39 @@ describe("CAMPAIGN MANAGER TESTS", () => {
 
     subject.markCampaignAsSeen(campaign);
     campaignState = subject["campaignState"];
-    
+
     expect(campaignState[campaign.id].status).toBe("seen");
   });
-  
+
+  it("Can be removed", () => {
+    const subject = setUpCampaignManagerWithData(data);
+    let campaignList = subject.getMessageCenterCampaigns();
+    expect(campaignList.length).toBe(2);
+    const campaign = campaignList[0];
+
+    let campaignState = subject["campaignState"];
+
+    expect(campaignState[campaign.id].status).toBe("unseen");
+
+    subject.removeMessageCenterCampaign(campaign);
+    campaignState = subject["campaignState"];
+
+    expect(campaignState[campaign.id].status).toBe("deleted");
+
+    campaignList = subject.getMessageCenterCampaigns();
+    expect(campaignList.length).toBe(1);
+  });
 
   it("Shows message center campaigns", () => {
     const subject = setUpCampaignManagerWithData(data);
 
     const mcCampaigns = subject.getMessageCenterCampaigns();
     subject.showCampaign(mcCampaigns[0]);
-    moveIAMOffscreen();
 
-    expect(document.getElementById(SWRVE_IAM_CONTAINER)).not.toBeNull();
+    const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+    expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
+    expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-1")).not.toBeNull();
+
   });
 
   it("Finds and shows embedded message center campaigns", () => {
@@ -247,36 +279,37 @@ import _allTwo = require("./resources/json/CampaignParserTest-all2.json");
 import _allThree = require("./resources/json/CampaignParserTest-all3.json");
 import _allFour = require("./resources/json/CampaignParserTest-all4.json");
 
+
 describe("CAMPAIGN PARSER TESTS", () => {
   it("empty campaign", () => {
-    const results = CampaignManager.getAllAssets([]);
+    const results = CampaignManager.getAllAssets([], "test.cdn");
     expect(results).toHaveLength(0);
   });
 
   it("campaigns with no messages", () => {
     const all: ISwrveCampaigns = _allOne as any;
-    const results = CampaignManager.getAllAssets(all.campaigns);
+    const results = CampaignManager.getAllAssets(all.campaigns, "test.cdn");
 
     expect(results).toHaveLength(0);
   });
 
   it("campaigns with 2 campaigns and 5 buttons,images", () => {
     const all: ISwrveCampaigns = _allTwo as any;
-    const results = CampaignManager.getAllAssets(all.campaigns);
+    const results = CampaignManager.getAllAssets(all.campaigns, "test.cdn");
 
     expect(results).toHaveLength(5);
   });
 
   it("campaign with missing message node in one campaign and two assets in other", () => {
     const all: ISwrveCampaigns = _allThree as any;
-    const results = CampaignManager.getAllAssets(all.campaigns);
+    const results = CampaignManager.getAllAssets(all.campaigns, "test.cdn");
 
     expect(results).toHaveLength(2);
   });
 
   it("campaign with no messages nodes", () => {
     const all: ISwrveCampaigns = _allFour as any;
-    const results = CampaignManager.getAllAssets(all.campaigns);
+    const results = CampaignManager.getAllAssets(all.campaigns, "test.cdn");
 
     expect(results).toHaveLength(0);
   });

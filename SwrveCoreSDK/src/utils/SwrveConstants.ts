@@ -2,6 +2,9 @@
 export const SWRVE_EVENTS_API_VERSION = 3;
 export const SWRVE_USER_CONTENT_API_VERSION = "8";
 export const SWRVE_EMBEDDED_CAMPAIGN_VERSION = "1";
+
+//there is code for IAMs in this SDK, that is mostly compatibile with in app version 3
+//but not fully supported yet. For now setting to 0 which will not return any IAM campaigns
 export const SWRVE_IN_APP_CAMPAIGN_VERSION = "0";
 
 /* device properties */
@@ -33,8 +36,6 @@ export const SWRVE_DEVICE_TYPE = "swrve.device_type";
 /* button actions */
 export const DISMISS = "DISMISS";
 export const CUSTOM = "CUSTOM";
-export const SWRVE_IAM_CONTAINER = "SwrveIAMContainer";
-export const SWRVE_OVERLAY_CONTAINER = 'SwrveOverlayContainer';
 
 /* match to android values */
 export const GLOBAL_CAMPAIGN_THROTTLE_MAX_IMPRESSIONS = 11;
@@ -50,6 +51,7 @@ export const CAMPAIGN_NO_MATCH = 6;
 export const CAMPAIGN_MATCH = 7;
 export const CAMPAIGN_NOT_DOWNLOADED = 8;
 export const CAMPAIGN_ELIGIBLE_BUT_OTHER_CHOSEN = 10;
+export const CAMPAIGN_COULD_NOT_PERSONALIZE = 11;
 
 export const CAMPAIGN_STATE = "campaignState.";
 export const CAMPAIGNS = "campaigns.";
@@ -75,5 +77,6 @@ export const APP_ID_ERROR =
 export const INVALID_FUNCTION = "Please pass a valid function to $.";
 export const GET_INSTANCE_ERROR = "Please call SwrveCoreSDK.getInstance() first.";
 export const INVALID_EVENT_NAME = "Event name may not contain the word Swrve.";
+export const EMPTY_EVENT_NAME = "Event name may not be empty.";
 export const NO_SYNCHRONOUS_STORAGE = "Local Storage is not available.";
 export const REQUIRED_DEPENDENCY_PLATFORM = "IPlatform implementation is a required dependency for Swrve SDK core."

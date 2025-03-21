@@ -105,6 +105,18 @@ export interface ISwrveMessage extends ISwrveBaseMessage {
   template: { formats: ReadonlyArray<ISwrveFormat> };
 }
 
+export interface ISwrveInAppMessage {
+  personalizationProperties?: IDictionary<string>;
+  parentCampaign: ISwrveCampaign;
+  images: ReadonlyArray<ISwrveImage>;
+  buttons: ReadonlyArray<ISwrveButton>;
+  scale: number;
+  imagesCDN: string;
+  canvasHeight: number;
+  canvasWidth: number;
+}
+
+
 export interface ISwrveFormat {
   name: string;
   orientation: string;
@@ -131,6 +143,7 @@ export interface ISwrveValue {
 export interface ISwrveAsset {
   getAssetID(): string | number;
   getAssetPath(): string | number;
+  canRender(): boolean;
 }
 
 export interface ISwrveButton {
@@ -145,12 +158,14 @@ export interface ISwrveButton {
   type: ISwrveValue;
   action: ISwrveValue;
   game_id: ISwrveValue;
-  image_up: ISwrveValue;
+  image_up?: ISwrveValue;
+  dynamic_image_url?: string;
+  text?: ISwrveValue;
 }
 
 export interface ISwrveImage {
   color: ISwrveValue;
-  image: ISwrveValue;
+  image?: ISwrveValue;
   image_filename: string;
   image_height: number;
   image_width: number;
@@ -159,4 +174,6 @@ export interface ISwrveImage {
   x: ISwrveValue;
   y: ISwrveValue;
   h: ISwrveValue;
+  dynamic_image_url?: string;
+  text?: ISwrveValue;
 }

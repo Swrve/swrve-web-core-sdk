@@ -7,12 +7,7 @@ import {
   ISwrveMessage,
 } from "../src/interfaces/ISwrveCampaign";
 import PlatformMock from "./mocks/PlatformMock";
-import SwrveLogger from "../src/utils/SwrveLogger";
-import {
-  SWRVE_IAM_CONTAINER,
-  SWRVE_OVERLAY_CONTAINER,
-} from "../src/utils/SwrveConstants";
-
+import HTMLSwrveInAppElement from "../src/Campaigns/Messages/HTMLSwrveInAppElement";
 const twoDays = 172800000;
 
 import _oneButton = require("./resources/json/SwrveMessageDisplayManagerTests-oneButton.json");
@@ -42,6 +37,7 @@ oneImage.campaigns.campaigns[0].start_date = Date.now() - twoDays;
 oneImage.campaigns.campaigns[0].end_date = Date.now() + twoDays;
 
 import _scaled = require("./resources/json/SwrveMessageDisplayManagerTests-scaled.json");
+
 const scaled: ISwrveCampaignResourceResponse = _scaled as any;
 scaled.campaigns.campaigns[0].start_date = Date.now() - twoDays;
 scaled.campaigns.campaigns[0].end_date = Date.now() + twoDays;
@@ -70,21 +66,6 @@ let profileManager = new ProfileManager(
 );
 let campaignManager = new CampaignManager(profileManager, platform, storageManager);
 
-const cleanUpDom = () => {
-  const iamContainer = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-  if (iamContainer) {
-    document.body.removeChild(iamContainer);
-  }
-};
-
-const moveIAMOffscreen = () => {
-  const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-
-  if (container) {
-    container.style.left = "-10000px";
-  }
-};
-
 describe("MESSAGE DISPLAY MANAGER TESTS", () => {
   jest.spyOn(SwrveCoreSDK, "getPlatform").mockReturnValue(new PlatformMock());
 
@@ -93,83 +74,61 @@ describe("MESSAGE DISPLAY MANAGER TESTS", () => {
       .init(["language", "countryCode", "timezone", "firmware"])
       .then(() => {
         platform.synchronousStorage.clear();
-        cleanUpDom();
         campaignManager = new CampaignManager(profileManager, platform, storageManager);
-        jest
-          .spyOn(campaignManager.getAssetManager(), "checkAssetsForCampaign")
-          .mockReturnValue(true);
       });
   });
 
   it("adds IAM container and one button", (done) => {
-    campaignManager.storeCampaigns(oneButton, () => {
+    campaignManager.storeCampaigns(oneButton, {}, () => {
       campaignManager.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
-      const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-      const button1 = document.getElementById("SwrveButton0");
-
-      expect(container).not.toBeNull();
-      expect(button1).not.toBeNull();
-
+      const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
       done();
     });
   });
 
   it("adds IAM container and two buttons", (done) => {
-    campaignManager.storeCampaigns(twoButtons, () => {
+    campaignManager.storeCampaigns(twoButtons, {}, () => {
       campaignManager.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
-
-      const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-      const button1 = document.getElementById("SwrveButton0");
-      const button2 = document.getElementById("SwrveButton1");
-
-      expect(container).not.toBeNull();
-      expect(button1).not.toBeNull();
-      expect(button2).not.toBeNull();
+      const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
 
       done();
     });
   });
 
   it("adds IAM container and three buttons", (done) => {
-    campaignManager.storeCampaigns(threeButtons, () => {
+    campaignManager.storeCampaigns(threeButtons, {}, () => {
       campaignManager.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
 
-      const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-      const button1 = document.getElementById("SwrveButton0");
-      const button2 = document.getElementById("SwrveButton1");
-      const button3 = document.getElementById("SwrveButton2");
-
-      expect(container).not.toBeNull();
-      expect(button1).not.toBeNull();
-      expect(button2).not.toBeNull();
-      expect(button3).not.toBeNull();
+      const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-1")).not.toBeNull();
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-2")).not.toBeNull();
 
       done();
     });
   });
 
   it("adds IAM container and one image", (done) => {
-    campaignManager.storeCampaigns(oneImage, () => {
+    campaignManager.storeCampaigns(oneImage, {}, () => {
       campaignManager.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
 
-      const container = document.getElementById(SWRVE_IAM_CONTAINER);
-      const image0 = document.getElementById("SwrveImage0");
+      const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__image-0")).not.toBeNull();
 
-      expect(container).not.toBeNull();
-      expect(image0).not.toBeNull();
       done();
     });
   });
 
   it("applies scale", () => {
-    campaignManager.storeCampaigns(scaled, () => {
+    campaignManager.storeCampaigns(scaled, {}, () => {
       campaignManager.checkTriggers("tv.event_simple", {}, impressionHandler, true);
-      moveIAMOffscreen();
-      const button1 = document.getElementById("SwrveButton0") as HTMLImageElement;
+
+      const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
+      
+      const button1 = iamItem.shadowRoot?.getElementById("swrveIAM__button-0") as HTMLImageElement;
 
       if (button1) {
         const originalSize = 80;

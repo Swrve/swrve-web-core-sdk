@@ -6,13 +6,11 @@ import {
   ISwrveCampaignResourceResponse,
   ISwrveEmbeddedMessage,
 } from "../src/interfaces/ISwrveCampaign";
-import { APP_ID_ERROR, CAMPAIGN_MATCH } from "../src/utils/SwrveConstants";
+import { CAMPAIGN_MATCH } from "../src/utils/SwrveConstants";
 import { parseUuid } from "../src/utils/uuid";
-import IRestResponse from "../src/interfaces/IRestResponse";
 import { IQueryParams } from "../src/interfaces/IQueryParams";
 import IResourceDiff from "../src/interfaces/IResourceDiff";
 import {
-  ISwrveConfig,
   ISwrveEmbeddedMessageConfig,
   ISwrveWebPushConfig,
 } from "../src/interfaces/ISwrveConfig";
@@ -44,6 +42,12 @@ embeddedMessageTriggered.campaigns.campaigns[0].start_date =
   Date.now() - twoDays;
 embeddedMessageTriggered.campaigns.campaigns[0].end_date = Date.now() + twoDays;
 
+import _inAppMessageMC = require("./resources/json/SwrveSDKTests-messageCenter.json");
+const inAppMessageMC: ISwrveCampaignResourceResponse = _inAppMessageMC as any;
+inAppMessageMC.campaigns.campaigns[0].start_date = Date.now() - twoDays;
+inAppMessageMC.campaigns.campaigns[0].end_date = Date.now() + twoDays;
+
+
 import _embeddedMessageMC = require("./resources/json/SwrveSDKTests-embeddedMessageCenter.json");
 const embeddedMessageMC: ISwrveCampaignResourceResponse =
   _embeddedMessageMC as any;
@@ -63,6 +67,7 @@ import PlatformMock from "./mocks/PlatformMock";
 import { SWRVE_USER_ID } from "../src/utils/SwrveConstants";
 import IDictionary from "../src/interfaces/IDictionary";
 import DateHelper from "../src/utils/DateHelper";
+import HTMLSwrveInAppElement from "../src/Campaigns/Messages/HTMLSwrveInAppElement";
 
 const pal = new PlatformMock();
 
@@ -160,9 +165,9 @@ describe("SWRVE SDK TESTS", () => {
   });
 
   it("generate first Use timestamp ", () => {
-    const expectedDate = new Date("2019-04-07T10:20:30Z").getTime();
+    const date = new Date("2019-04-07T10:20:30Z");
+    DateHelper.nowInUtcTime = jest.fn().mockReturnValue(date.getTime());
 
-    DateHelper.nowInUtcTime = jest.fn(() => expectedDate);
     restClient.changeResponse({ json: () => passes });
     pal.synchronousStorage!.clear();
 
@@ -174,7 +179,7 @@ describe("SWRVE SDK TESTS", () => {
 
     const profileManager = sdk["profileManager"];
     expect(profileManager.currentUser.firstUse).not.toBe(0);
-    expect(profileManager.currentUser.firstUse).toBe(expectedDate);
+    expect(profileManager.currentUser.firstUse).toBe(date.getTime());
   });
 
   it("queue named Event - success", (done) => {
@@ -197,6 +202,41 @@ describe("SWRVE SDK TESTS", () => {
       sdk.shutdown();
       done();
     }, 1500);
+  });
+
+  it("Test event with only valid names being queued", (done) => {
+    const restClient = new MockSwrveRestClient();
+  
+    const sdk = new Swrve(
+      { appId: 30512, apiKey: "1234" },
+      { restClient, platform: pal }
+    );
+    sdk.init();
+  
+    const eventNames = [
+      "test",
+      "Swrve.test",
+      "swrve.test",
+      "test ",
+      "test a b",
+      "",
+      " "
+    ];
+  
+    eventNames.forEach(eventName => {
+      try {
+        sdk.event(eventName, { type: "test", amount: 4 });
+      } catch (error) {
+      }
+    });
+  
+    const eventManager = sdk["evtManager"];
+    const queue = eventManager.getQueue();
+    expect(queue.length).toEqual(3);
+    sdk.shutdown();
+    done();
+    
+    restClient.changeResponse({ status: 200 });
   });
 
   it("queue named Event - fail", (done) => {
@@ -847,6 +887,58 @@ describe("SWRVE SDK TESTS", () => {
     }, 1000);
   });
 
+  it("IAM will fire when called from the on messageCenter", (done) => {
+    restClient.changeResponse({ json: () => inAppMessageMC });
+
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+
+      const localProperties = {
+        "user.author": "thomas",
+      } as IDictionary<string>;
+      const mc = sdk.getMessageCenterCampaigns(localProperties);
+      expect(mc.length).toBe(1);
+
+      sdk.showMessageCenterCampaign(mc[0], localProperties);
+
+      const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+      expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
+
+      const eventQueue = sdk.getQueuedEvents();
+      const qaQueue = sdk.getQALogging().getQueue();
+
+      expect(eventQueue.length).toBe(2);
+      expect(qaQueue.length).toBe(4);
+
+      const deliveredEvents = eventQueue.filter(
+        (evt) =>
+          evt.type === "event" && evt.name === "Swrve.Messages.Message-317655.impression"
+      );
+      expect(deliveredEvents.length).toBe(1);
+
+      const deliveredQAEvents = qaQueue.filter(
+        (evt) =>
+          evt.type === "qa_log_event" &&
+          JSON.stringify(evt.log_details).indexOf(
+            "Swrve.Messages.Message-317655.impression"
+          ) !== -1
+      );
+
+      expect(deliveredQAEvents.length).toBe(1);
+
+      done();
+    }, 1000);
+  });
+
   it("Embedded Campaign callback API in config was fired on messageCenter", (done) => {
     restClient.changeResponse({ json: () => embeddedMessageMC });
 
@@ -876,7 +968,7 @@ describe("SWRVE SDK TESTS", () => {
       const mc = sdk.getMessageCenterCampaigns(localProperties);
       expect(mc.length).toBe(1);
 
-      sdk.showCampaign(mc[0], localProperties);
+      sdk.showMessageCenterCampaign(mc[0], localProperties);
 
       expect(embeddedCallback.mock.calls.length).toBe(1);
 

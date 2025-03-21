@@ -1,21 +1,12 @@
 import PAL from "../src/utils/PAL";
 import { Swrve } from "../src/Swrve";
 import { MockSwrveRestClient } from "./mocks/MockSwrveRestClient";
-import { ISwrveConfig } from "../src/interfaces/ISwrveConfig";
-import {
-  NETWORK_CONNECTED,
-  NetworkListener,
-  IPlatform,
-} from "../src/interfaces/IPlatform";
 import IIdentityResponse from "../src/interfaces/IIdentityResponse";
 import {
   EXISTING_EXTERNAL_ID,
-  SWRVE_IAM_CONTAINER,
-  SWRVE_OVERLAY_CONTAINER,
   SWRVE_USER_ID_NO_PREFIX,
 } from "../src/utils/SwrveConstants";
-import { ProfileManager } from "../src/Profile/ProfileManager";
-import SwrveLogger from "../src/utils/SwrveLogger";
+import HTMLSwrveInAppElement from "../src/Campaigns/Messages/HTMLSwrveInAppElement";
 import { StorageManager } from "../src/Storage/StorageManager";
 import PlatformMock from "./mocks/PlatformMock";
 import { SwrveCoreSDK } from "../src/SwrveCoreSDK";
@@ -39,21 +30,6 @@ import _passes = require("./resources/json/IdentityTests-passes.json");
 const passes = _passes as any;
 passes.campaigns.campaigns[0].start_date = Date.now() - twoDays;
 passes.campaigns.campaigns[0].end_date = Date.now() + twoDays;
-
-const cleanUpDom = () => {
-  const iamContainer = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-  if (iamContainer) {
-    document.body.removeChild(iamContainer);
-  }
-};
-
-const moveIAMOffscreen = () => {
-  const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-
-  if (container) {
-    container.style.left = "-10000px";
-  }
-};
 
 describe("Identity Tests", () => {
   jest.spyOn(SwrveCoreSDK, "getPlatform").mockReturnValue(new PlatformMock());
@@ -393,12 +369,7 @@ describe("Identity Tests", () => {
       // make sure we have a different user before we switch so it's a proper one
       expect(sdk["profileManager"].currentUser.userId).not.toBe("SwrveUser489");
 
-      moveIAMOffscreen();
-      cleanUpDom();
       const campaignManager = sdk["campaignManager"];
-      jest
-        .spyOn(campaignManager.getAssetManager(), "checkAssetsForCampaign")
-        .mockReturnValue(true);
       campaignManager.closeMessage();
 
       setTimeout(() => {
@@ -410,15 +381,12 @@ describe("Identity Tests", () => {
 
         sdk.identify("test", () => {}, (error) => {});
 
-        moveIAMOffscreen();
-
         setTimeout(() => {
           expect(sdk["profileManager"].currentUser.userId).toBe("SwrveUser489");
           expect(sdk["profileManager"].currentUser.sessionToken).toContain("SwrveUser489");
 
-          const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
-          expect(container).not.toBeNull();
-          cleanUpDom();
+          const iamItem = document.getElementsByTagName("swrve-in-app-message")[0] as HTMLSwrveInAppElement;
+          expect(iamItem.shadowRoot?.getElementById("swrveIAM__button-0")).not.toBeNull();
           done();
         }, 1000);
       }, 500);

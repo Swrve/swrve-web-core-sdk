@@ -36,9 +36,6 @@ export type OnIdentifySuccessCallback = (
 ) => void;
 export type OnIdentifyErrorCallback = (error: string) => void;
 export type OnSwrveCoreReadyCallback = () => void;
-export type OnMessageListener = (msg: ISwrveMessage) => void;
-export type OnIAMDismissed = () => void;
-export type OnCustomButtonClicked = (customString: string) => void;
 
 export class SwrveCoreSDK {
   private static _instance: SwrveCoreSDK | null = null;
@@ -118,18 +115,6 @@ export class SwrveCoreSDK {
 
   public static onCampaignLoaded(callback: OnCampaignLoadedCallback): void {
     SwrveCoreSDK.checkInstance().onCampaignLoaded(callback);
-  }
-
-  public static onMessage(callback: OnMessageListener): void {
-    SwrveCoreSDK.checkInstance().onMessage(callback);
-  }
-
-  public static onIAMDismissed(callback: OnIAMDismissed): void {
-    SwrveCoreSDK.checkInstance().onIAMDismissed(callback);
-  }
-
-  public static onCustomButtonClicked(callback: OnCustomButtonClicked): void {
-    SwrveCoreSDK.checkInstance().onCustomButtonClicked(callback);
   }
 
   //******************************** Accessor methods *********************************************//
@@ -298,7 +283,7 @@ export class SwrveCoreSDK {
     campaign: ISwrveCampaign,
     personalizationProperties?: IDictionary<string>
   ): boolean {
-    return SwrveCoreSDK.checkInstance().showCampaign(
+    return SwrveCoreSDK.checkInstance().showMessageCenterCampaign(
       campaign,
       personalizationProperties
     );
@@ -308,6 +293,10 @@ export class SwrveCoreSDK {
     campaign: ISwrveCampaign
   ): void {
     SwrveCoreSDK.checkInstance().markMessageCenterCampaignAsSeen(campaign);
+  }
+
+  public static removeMessageCenterCampaign(campaign: ISwrveCampaign): void {
+    SwrveCoreSDK.checkInstance().removeMessageCenterCampaign(campaign);
   }
 
   //**************************************** Push Only **********************************//

@@ -14,7 +14,7 @@ import {
   ICampaignDownloadData,
   IQACampaignTriggerEvent,
 } from "../Events/EventTypeInterfaces";
-import { ICampaignState } from "../interfaces/ICampaignState";
+import { CampaignStatus, ICampaignState } from "../interfaces/ICampaignState";
 import {
   CAMPAIGN_NOT_ACTIVE,
   CAMPAIGN_NOT_DOWNLOADED,
@@ -32,18 +32,21 @@ import {
   CAMPAIGN_STATE,
   CAMPAIGNS,
   SWRVE_CAMPAIGN_STATUS_SEEN,
+  SWRVE_CAMPAIGN_STATUS_DELETED,
+  CAMPAIGN_COULD_NOT_PERSONALIZE,
 } from "../utils/SwrveConstants";
 import { IPlatform } from "../interfaces/IPlatform";
 import { SwrveMessageDisplayManager } from "./Messages/SwrveMessageDisplayManager";
 import { AssetManager } from "./AssetManager";
-import { OnMessageListener } from "../SwrveCoreSDK";
-import { OnEmbeddedMessageListener } from "../interfaces/ISwrveConfig";
+import {
+  OnEmbeddedMessageListener,
+  OnMessageListener,
+} from "../interfaces/ISwrveConfig";
 import SwrveLogger from "../utils/SwrveLogger";
 import { ProfileManager } from "../Profile/ProfileManager";
 import { OnButtonClicked } from "./Messages/SwrveMessageDisplayManager";
-import { ResourceManager } from "../Resources/ResourceManager";
-import { SwrveButton } from "../UIElements/SwrveButton";
-import { SwrveImage } from "../UIElements/SwrveImage";
+import { SwrveButton } from "./Messages/UIElements/SwrveButton";
+import { SwrveImage } from "./Messages/UIElements/SwrveImage";
 import SwrveConfig from "../Config/SwrveConfig";
 import { IDictionary } from "..";
 import DateHelper from "../utils/DateHelper";
@@ -72,7 +75,6 @@ export class CampaignManager {
 
   private readonly messageDisplayManager: SwrveMessageDisplayManager;
   private readonly assetManager: AssetManager;
-  private onMessageListener: OnMessageListener | null = null;
   private onEmbeddedListener: OnEmbeddedMessageListener | null = null;
 
   //global rules
@@ -91,15 +93,13 @@ export class CampaignManager {
     public profileManager: ProfileManager,
     platform: IPlatform,
     storageManager: StorageManager,
-    config?: SwrveConfig,
-    resourceManager?: ResourceManager
+    config?: SwrveConfig
   ) {
     this.storageManager = storageManager;
     this.loadStoredCampaigns(this.profileManager.currentUser.userId);
     this.messageDisplayManager = new SwrveMessageDisplayManager(
       platform,
-      config,
-      resourceManager
+      config
     );
     this.assetManager = new AssetManager();
     this.platform = platform;
@@ -107,6 +107,7 @@ export class CampaignManager {
 
   public storeCampaigns(
     response: ISwrveCampaignResourceResponse,
+    personalizationProperties: IDictionary<string>,
     onAssetsLoaded: OnAssetsLoaded
   ): void {
     if (response === undefined) {
@@ -120,7 +121,7 @@ export class CampaignManager {
       this.parseMessages(this.campaigns);
       this.parseTriggers(this.campaigns);
       this.synchronizeCampaignState();
-      this.handleAssets(onAssetsLoaded);
+      this.handleAssets(onAssetsLoaded, personalizationProperties);
       this.storageManager.saveData(
         CAMPAIGNS + this.profileManager.currentUser.userId,
         JSON.stringify(this.campaigns)
@@ -194,10 +195,6 @@ export class CampaignManager {
     return this.campaignState[campaignId];
   }
 
-  public onMessage(onMessageListener: OnMessageListener): void {
-    this.onMessageListener = onMessageListener;
-  }
-
   public onEmbeddedMessage(
     onEmbeddedMessageListener: OnEmbeddedMessageListener
   ): void {
@@ -210,23 +207,32 @@ export class CampaignManager {
 
   public showCampaign(
     campaign: ISwrveCampaign,
-    personalizationProperties?: IDictionary<string>
+    personalizationProperties?: IDictionary<string>,
+    impressionCallback?: OnMessageListener
   ): boolean {
     if (campaign.messages && campaign.messages.length > 0) {
-      /* TODO: future work - Add personalization to showMessage in display manager and check assets for image personalization */
       const message = campaign.messages[0];
       message.parentCampaign = campaign.id;
 
-      this.messageDisplayManager.showMessage(
-        campaign.messages[0],
-        campaign,
-        this.assetManager.ImagesCDN,
-        this.platform
-      );
+      if (this.canCampaignRender(campaign, personalizationProperties)) {
+        this.messageDisplayManager.showMessage(
+          campaign.messages[0],
+          campaign,
+          this.assetManager.ImagesCDN,
+          personalizationProperties
+        );
 
-      this.updateCampaignState(message);
+        if (impressionCallback) {
+          impressionCallback(message);
+        }
 
-      return true;
+        this.updateCampaignState(message);
+
+        return true;
+      } else {
+        SwrveLogger.error("cannot render campaign, not attempting to display");
+        return false;
+      }
     } else if (campaign.embedded_message && campaign.embedded_message.data) {
       const embeddedMessage = campaign.embedded_message;
       embeddedMessage.parentCampaign = campaign.id;
@@ -262,7 +268,7 @@ export class CampaignManager {
       code: number
     ): void {
       SwrveLogger.debug(
-        "Campaign trigger status: " + reason + " Displayed " + displayed
+        "campaign trigger status: " + reason + " displayed " + displayed
       );
       campaignStatus = { status: code, message: reason };
       campaignStatuses.push({ id, displayed, type: "iam", reason });
@@ -336,8 +342,10 @@ export class CampaignManager {
         let passedAllRules = matchingMessages.filter((message) => {
           for (const campaign of this.campaigns) {
             if (campaign.id === message.parentCampaign!) {
-              const { status, message: reason } =
-                this.applyCampaignRules(campaign);
+              const { status, message: reason } = this.applyCampaignRules(
+                campaign,
+                personalizationProperties
+              );
               const ok = status === CAMPAIGN_MATCH;
               SwrveLogger.debug(reason);
               if (qa && !ok) {
@@ -406,34 +414,27 @@ export class CampaignManager {
           this.lastShownMessageTime = this.getNow();
 
           if (!this.messageDisplayManager.isIAMShowing()) {
-            if (this.onMessageListener) {
-              this.onMessageListener(selectedMessage as ISwrveMessage);
-            } else {
-              for (const campaign of this.campaigns) {
-                if (campaign.id === selectedMessage.parentCampaign!) {
-                  if (campaign.messages && campaign.messages.length > 0) {
-                    this.showMessage(
-                      selectedMessage as ISwrveMessage,
-                      campaign
+            for (const campaign of this.campaigns) {
+              if (campaign.id === selectedMessage.parentCampaign!) {
+                if (campaign.messages && campaign.messages.length > 0) {
+                  this.showMessage(selectedMessage as ISwrveMessage, campaign, personalizationProperties);
+                  this.updateCampaignState(selectedMessage);
+                  impressionCallback(selectedMessage as ISwrveMessage);
+                  break;
+                }
+
+                if (
+                  campaign.embedded_message &&
+                  campaign.embedded_message.data
+                ) {
+                  if (this.onEmbeddedListener) {
+                    this.onEmbeddedListener(
+                      selectedMessage as ISwrveEmbeddedMessage,
+                      personalizationProperties
                     );
-                    this.updateCampaignState(selectedMessage);
-                    impressionCallback(selectedMessage as ISwrveMessage);
-                    break;
                   }
 
-                  if (
-                    campaign.embedded_message &&
-                    campaign.embedded_message.data
-                  ) {
-                    if (this.onEmbeddedListener) {
-                      this.onEmbeddedListener(
-                        selectedMessage as ISwrveEmbeddedMessage,
-                        personalizationProperties
-                      );
-                    }
-
-                    break;
-                  }
+                  break;
                 }
               }
             }
@@ -459,12 +460,12 @@ export class CampaignManager {
     };
   }
 
-  public showMessage(message: ISwrveMessage, campaign: ISwrveCampaign): void {
+  public showMessage(message: ISwrveMessage, campaign: ISwrveCampaign, personalizationProperties?: IDictionary<string>): void {
     this.messageDisplayManager.showMessage(
       message,
       campaign,
       this.assetManager.ImagesCDN,
-      this.platform
+      personalizationProperties
     );
   }
 
@@ -521,7 +522,12 @@ export class CampaignManager {
     personalizationProperties?: IDictionary<string>
   ): ISwrveCampaign[] {
     return this.campaigns
-      .filter((campaign) => campaign.message_center)
+      .filter(
+        (campaign) =>
+          campaign.message_center &&
+          this.campaignState[campaign.id].status !==
+            SWRVE_CAMPAIGN_STATUS_DELETED && this.canCampaignRender(campaign, personalizationProperties)
+      )
       .map((campaign) => ({ ...campaign }));
   }
 
@@ -539,9 +545,6 @@ export class CampaignManager {
           JSON.stringify(this.campaignState)
         );
 
-        //TODO: this shouldn't be like this
-        //impressionCallback(message);
-
         this.messagesShownCount++;
 
         break;
@@ -550,9 +553,20 @@ export class CampaignManager {
   }
 
   public markCampaignAsSeen(campaign: ISwrveCampaign): void {
+    this.setCampaignStatus(campaign, SWRVE_CAMPAIGN_STATUS_SEEN);
+  }
+
+  public removeMessageCenterCampaign(campaign: ISwrveCampaign): void {
+    this.setCampaignStatus(campaign, SWRVE_CAMPAIGN_STATUS_DELETED);
+  }
+
+  private setCampaignStatus(
+    campaign: ISwrveCampaign,
+    newStatus: CampaignStatus
+  ): void {
     if (campaign) {
       const campaignState = this.campaignState[campaign.id];
-      campaignState.status = SWRVE_CAMPAIGN_STATUS_SEEN;
+      campaignState.status = newStatus;
       this.campaignState[campaign.id] = campaignState;
 
       this.storageManager.saveData(
@@ -600,7 +614,8 @@ export class CampaignManager {
   }
 
   private applyCampaignRules(
-    parentCampaign: ISwrveCampaign
+    parentCampaign: ISwrveCampaign,
+    personalizationProperties?: IDictionary<string>
   ): ICampaignRuleStatus {
     const rules = parentCampaign.rules;
     const campaignState = this.campaignState[parentCampaign.id];
@@ -655,7 +670,19 @@ export class CampaignManager {
       };
     }
 
-    const assetsForTrigger = CampaignManager.getAllAssets([parentCampaign]);
+    const assetsForTrigger = CampaignManager.getAllAssets(
+      [parentCampaign],
+      this.assetManager.ImagesCDN,
+      personalizationProperties
+    );
+
+    if (!assetsForTrigger.every((asset) => asset.canRender())) {
+      return {
+        status: CAMPAIGN_COULD_NOT_PERSONALIZE,
+        message: "Personalization failed for campaign " + parentCampaign,
+      };
+    }
+
     if (!this.assetManager.checkAssetsForCampaign(assetsForTrigger)) {
       return {
         status: CAMPAIGN_NOT_DOWNLOADED,
@@ -686,7 +713,7 @@ export class CampaignManager {
     }
 
     SwrveLogger.info(
-      "Global Rules: max_messages_per_session:" +
+      "global Rules: max_messages_per_session:" +
         this._maxMessagesPerSession +
         " min_delay:" +
         this._minDelay +
@@ -722,22 +749,30 @@ export class CampaignManager {
     });
   }
 
-  //TODO: image personalization will change this somewhat
-  private handleAssets(onAssetsLoaded: OnAssetsLoaded): void {
-    const assets = CampaignManager.getAllAssets(this.campaigns);
+  private handleAssets(
+    onAssetsLoaded: OnAssetsLoaded,
+    personalizationProperties?: IDictionary<string>
+  ): void {
+    const assets = CampaignManager.getAllAssets(
+      this.campaigns,
+      this.assetManager.ImagesCDN,
+      personalizationProperties
+    );
     this.assetManager
       .manageAssets(assets)
       .then(() => {
-        SwrveLogger.info("CampaignManager: asset download complete");
+        SwrveLogger.info("asset download complete");
         onAssetsLoaded();
       })
       .catch((error) => {
-        SwrveLogger.info("Error downloading assets " + error);
+        SwrveLogger.info("error downloading assets " + error);
       });
   }
 
   public static getAllAssets(
-    campaigns: ReadonlyArray<ISwrveCampaign>
+    campaigns: ReadonlyArray<ISwrveCampaign>,
+    cdn: string,
+    personalizationProperties?: IDictionary<string>
   ): ISwrveAsset[] {
     const assets: ISwrveAsset[] = [];
     for (const campaign of campaigns) {
@@ -745,11 +780,13 @@ export class CampaignManager {
         const formats = (message.template && message.template.formats) || [];
         for (const format of formats) {
           for (const button of format.buttons || []) {
-            assets.push(new SwrveButton(button));
+            assets.push(
+              new SwrveButton(button, cdn, personalizationProperties)
+            );
           }
 
           for (const image of format.images || []) {
-            assets.push(new SwrveImage(image));
+            assets.push(new SwrveImage(image, cdn, personalizationProperties));
           }
         }
       }
@@ -757,7 +794,20 @@ export class CampaignManager {
 
     return assets;
   }
-  
+
+  private canCampaignRender(
+    campaign: ISwrveCampaign,
+    personalizationProperties?: IDictionary<string>
+  ): boolean {
+    const assets = CampaignManager.getAllAssets(
+      [campaign],
+      this.assetManager.ImagesCDN,
+      personalizationProperties
+    );
+
+    return assets.every((asset) => asset.canRender());
+  }
+
   private getNow(): number {
     return DateHelper.nowInUtcTime();
   }

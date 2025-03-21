@@ -7,7 +7,6 @@ import {
     ISwrveCampaign,
 } from '../src/interfaces/ISwrveCampaign';
 import {ProfileManager} from "../src/Profile/ProfileManager";
-import {SWRVE_IAM_CONTAINER, SWRVE_OVERLAY_CONTAINER} from "../src/utils/SwrveConstants";
 import { SwrveCoreSDK } from "../src/SwrveCoreSDK";
 import PlatformMock from "./mocks/PlatformMock";
 
@@ -27,6 +26,7 @@ campaignTemplate.end_date = Date.now() + twoDays;
 campaignTemplate.rules.min_delay_between_messages = Date.now() + twoDays;
 
 import _data1 = require("./resources/json/CampaignManagerTriggerTests-data1.json");
+import { SWRVE_IAM_OVERLAY } from "../src/Campaigns/Messages/SwrveInAppConstants";
 
 const data1: ISwrveCampaignResourceResponse = _data1 as any;
 data1.campaigns.campaigns = [{
@@ -35,14 +35,14 @@ data1.campaigns.campaigns = [{
 }];
 
 const cleanUpDom = () => {
-    const iamContainer = document.getElementById(SWRVE_OVERLAY_CONTAINER);
+    const iamContainer = document.getElementById(SWRVE_IAM_OVERLAY);
     if (iamContainer) {
         document.body.removeChild(iamContainer);
     }
 };
 
 const moveIAMOffscreen = () => {
-    const container = document.getElementById(SWRVE_OVERLAY_CONTAINER);
+    const container = document.getElementById(SWRVE_IAM_OVERLAY);
 
     if (container) {
         container!.style.left = "-10000px";
@@ -153,7 +153,7 @@ describe("Campaign Manager Trigger Tests", () => {
         const showMessage = jest.fn();
         // @ts-ignore: Instrumenting private method
         cm.messageDisplayManager.showMessage = showMessage
-        cm.storeCampaigns(data1, onAssetsLoaded);
+        cm.storeCampaigns(data1, {}, onAssetsLoaded);
         cm.checkTriggers("song1.played", { artist: "prince", song: "purple rain" }, impressionHandler);
         moveIAMOffscreen();
         expect(showMessage).toHaveBeenCalled();
@@ -169,7 +169,7 @@ describe("Campaign Manager Trigger Tests", () => {
         const showMessage = jest.fn();
         // @ts-ignore: Instrumenting private method
         cm.messageDisplayManager.showMessage = showMessage;
-        cm.storeCampaigns(data1, onAssetsLoaded);
+        cm.storeCampaigns(data1, {}, onAssetsLoaded);
         cm.checkTriggers("song2.played", { artist: "prince" }, impressionHandler);
         moveIAMOffscreen();
         expect(showMessage).toHaveBeenCalled();
@@ -184,7 +184,7 @@ describe("Campaign Manager Trigger Tests", () => {
         const showMessage = jest.fn()
         // @ts-ignore: Instrumenting private method
         cm.messageDisplayManager.showMessage = showMessage;
-        cm.storeCampaigns(data1, onAssetsLoaded);
+        cm.storeCampaigns(data1, {}, onAssetsLoaded);
         cm.checkTriggers("song3.played", {}, impressionHandler);
         expect(showMessage).toHaveBeenCalled();
         const message: ISwrveMessage = showMessage.mock.calls[0][0];
@@ -197,7 +197,7 @@ describe("Campaign Manager Trigger Tests", () => {
         const showMessage = jest.fn();
         // @ts-ignore: Instrumenting private method
         cm.messageDisplayManager.showMessage = showMessage;
-        cm.storeCampaigns(data1, onAssetsLoaded);
+        cm.storeCampaigns(data1, {}, onAssetsLoaded);
         cm.checkTriggers("song1.played", { artist: "prince" }, impressionHandler);
         moveIAMOffscreen();
         expect(showMessage).not.toHaveBeenCalled();
@@ -209,7 +209,7 @@ describe("Campaign Manager Trigger Tests", () => {
         const showMessage = jest.fn();
         // @ts-ignore: Instrumenting private method
         cm.messageDisplayManager.showMessage = showMessage;
-        cm.storeCampaigns(data1, onAssetsLoaded);
+        cm.storeCampaigns(data1, {}, onAssetsLoaded);
         cm.checkTriggers("test.event", {}, impressionHandler);
         moveIAMOffscreen();
         expect(showMessage).not.toHaveBeenCalled();

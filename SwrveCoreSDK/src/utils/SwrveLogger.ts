@@ -9,25 +9,25 @@ export default class SwrveLogger {
 
   public static error(message: string, ...args: any[]): void {
     if (_level <= SwrveLogger.ERROR) {
-      console.error(message, ...args);
+      console.error("Swrve Error: ", message, ...args);
     }
   }
 
   public static warn(message: string, ...args: any[]): void {
     if (_level <= SwrveLogger.WARN) {
-      console.warn(message, ...args);
+      console.warn("Swrve Warn: ", message, ...args);
     }
   }
 
   public static info(message: string, ...args: any[]): void {
     if (_level <= SwrveLogger.INFO) {
-      console.log(message, ...args);
+      console.log("Swrve Info: ", message, ...args);
     }
   }
 
   public static debug(message: string, ...args: any[]): void {
     if (_level <= SwrveLogger.DEBUG) {
-      console.log("DEBUG:", message, ...args);
+      console.log("Swrve Debug:", message, ...args);
     }
   }
 

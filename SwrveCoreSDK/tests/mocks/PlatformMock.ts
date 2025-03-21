@@ -25,6 +25,7 @@ import {
   SWRVE_TIMEZONE_NAME,
   SWRVE_UTC_OFFSET_SECONDS,
 } from "../../src/utils/SwrveConstants";
+import { ISwrveAsset } from "../interfaces/ISwrveCampaign";
 
 const defaultMapping: IKeyMapping = {
   36: "Return",
@@ -186,6 +187,11 @@ export default class PlatformMock implements IPlatform {
     });
 
     return Promise.all(downloading).then(() => void 0);
+  }
+
+  public checkStorageForAsset(asset: ISwrveAsset): boolean {
+      /** this is a test  */
+      return true;
   }
 
   public exit(): void {

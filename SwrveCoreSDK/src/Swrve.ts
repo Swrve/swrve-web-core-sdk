@@ -20,11 +20,8 @@ import {
   GetResourcesCallback,
   GetUserResourcesDiffCallback,
   OnCampaignLoadedCallback,
-  OnCustomButtonClicked,
-  OnIAMDismissed,
   OnIdentifyErrorCallback,
   OnIdentifySuccessCallback,
-  OnMessageListener,
   OnResourcesLoadedCallback,
   OnSwrveCoreReadyCallback,
 } from "./SwrveCoreSDK";
@@ -37,7 +34,12 @@ import SwrveLogger from "./utils/SwrveLogger";
 import { EventManager } from "./Events/EventManager";
 import { RealTimeUserPropertiesManager } from "./UserProperties/RealTimeUserPropertiesManager";
 import { SwrveRestClient } from "./RestClient/SwrveRestClient";
-import { ISwrveConfig } from "./interfaces/ISwrveConfig";
+import {
+  ISwrveConfig,
+  OnClipboardButtonListener,
+  OnCustomButtonListener,
+  OnDismissButtonListener,
+} from "./interfaces/ISwrveConfig";
 import { queryDeviceProperties } from "./utils/DeviceProperties";
 import IResourceDiff from "./interfaces/IResourceDiff";
 import IDictionary from "./interfaces/IDictionary";
@@ -78,8 +80,9 @@ export class Swrve {
 
   private onResourcesLoadedCallback: OnResourcesLoadedCallback | null = null;
   private onCampaignLoadedCallback: OnCampaignLoadedCallback | null = null;
-  private onCustomButtonClickedCallback: OnCustomButtonClicked | null = null;
-  private onIAMDismissedCallback: OnIAMDismissed | null = null;
+  private onCustomButtonClickedCallback: OnCustomButtonListener | null = null;
+  private onDismissButtonCallback: OnDismissButtonListener | null = null;
+  private onClipboardButtonCallback: OnClipboardButtonListener | null = null;
   private onSwrveCoreReadyCallback?: OnSwrveCoreReadyCallback;
 
   private eventLoopTimer: number = 0;
@@ -136,8 +139,7 @@ export class Swrve {
         this.profileManager,
         this.platform,
         this.storageManager,
-        this.config,
-        this.getResourceManager()
+        this.config
       );
 
     this.realTimeUserPropertiesManager = new RealTimeUserPropertiesManager(
@@ -202,6 +204,36 @@ export class Swrve {
       this.nonAnonTrackingInit();
     } else {
       this.anonPermittedTrackingInit();
+    }
+  }
+
+  private setupInAppConfiguration(config: ISwrveConfig) {
+    if (!config.inAppMessageConfig) {
+      return;
+    }
+
+    if (
+      config.inAppMessageConfig.customButtonListener &&
+      typeof config.inAppMessageConfig.customButtonListener === "function"
+    ) {
+      this.onCustomButtonClickedCallback =
+        config.inAppMessageConfig.customButtonListener;
+    }
+
+    if (
+      config.inAppMessageConfig.dismissButtonListener &&
+      typeof config.inAppMessageConfig.dismissButtonListener === "function"
+    ) {
+      this.onDismissButtonCallback =
+        config.inAppMessageConfig.dismissButtonListener;
+    }
+
+    if (
+      config.inAppMessageConfig.clipboardButtonListener &&
+      typeof config.inAppMessageConfig.clipboardButtonListener === "function"
+    ) {
+      this.onClipboardButtonCallback =
+        config.inAppMessageConfig.clipboardButtonListener;
     }
   }
 
@@ -285,9 +317,10 @@ export class Swrve {
   }
 
   public getMessageCenterCampaigns(
-    personalizationProperties?: IDictionary<String>
+    personalizationProperties?: IDictionary<string>
   ): ISwrveCampaign[] {
-    return this.campaignManager.getMessageCenterCampaigns();
+    const properties = this.retrievePersonalizationProperties(undefined, personalizationProperties);
+    return this.campaignManager.getMessageCenterCampaigns(properties);
   }
 
   //************************************ EVENTS ********************************************************************/
@@ -426,7 +459,7 @@ export class Swrve {
     userId: string = this.profileManager.currentUser.userId,
     forceUpdate: boolean = false
   ): void {
-    SwrveLogger.info("SWRVE INTERNAL: SEND QUEUED EVENTS");
+    SwrveLogger.info("sending queued events");
     if (this.pauseSDK) {
       return;
     }
@@ -459,7 +492,7 @@ export class Swrve {
 
   public embeddedMessageWasShownToUser(message: ISwrveEmbeddedMessage): void {
     this.campaignManager.updateCampaignState(message);
-    this.handleMessage(message, { embedded: "true" });
+    this.queueMessageImpressionEvent(message, { embedded: "true" });
   }
 
   public embeddedMessageButtonWasPressed(
@@ -515,7 +548,7 @@ export class Swrve {
           personalizationProperties
         );
       } catch (e) {
-        SwrveLogger.error("Could not resolve, error with personalization", e);
+        SwrveLogger.error("could not resolve, error with personalization", e);
       }
     }
 
@@ -535,7 +568,6 @@ export class Swrve {
   public async updateCampaignsAndResources(
     forceUpdate: boolean = false
   ): Promise<void> {
-    SwrveLogger.info("updateCampaignsAndResources");
     return this.getCampaignsAndResources()
       .then((response) => {
         this.handleCampaignResponse(response);
@@ -545,14 +577,14 @@ export class Swrve {
         }
       })
       .catch((error) => {
-        SwrveLogger.warn("getCampaigns failed ", error);
+        SwrveLogger.warn("get campaigns failed ", error);
 
         if (!this.isCampaignCallPending()) {
           this.campaignNetworkMonitorHandle = this.platform.monitorNetwork(
             (state) => {
               if (state === NETWORK_CONNECTED) {
                 SwrveLogger.info(
-                  "NETWORK RECONNECTED - RETRY CAMPAIGNS AND RESOURCES"
+                  "network reconnected retrying get campaigns"
                 );
                 this.platform.stopMonitoringNetwork(
                   this.campaignNetworkMonitorHandle!
@@ -654,7 +686,7 @@ export class Swrve {
 
   //******************************************** CALLBACKS *********************************************************/
 
-  public handleMessage(
+  public queueMessageImpressionEvent(
     message: ISwrveBaseMessage,
     payload?: IDictionary<string | number>
   ): void {
@@ -695,39 +727,6 @@ export class Swrve {
     this.onCampaignLoadedCallback = callback;
   }
 
-  public onMessage(callback: OnMessageListener): void {
-    if (typeof callback !== "function") {
-      SwrveLogger.error(
-        SwrveConstants.INVALID_FUNCTION.replace("$", "onMessage")
-      );
-      return;
-    }
-
-    this.campaignManager.onMessage(callback);
-  }
-
-  public onIAMDismissed(callback: OnIAMDismissed): void {
-    if (typeof callback !== "function") {
-      SwrveLogger.error(
-        SwrveConstants.INVALID_FUNCTION.replace("$", "onIAMDismissed")
-      );
-      return;
-    }
-
-    this.onIAMDismissedCallback = callback;
-  }
-
-  public onCustomButtonClicked(callback: OnCustomButtonClicked): void {
-    if (typeof callback !== "function") {
-      SwrveLogger.error(
-        SwrveConstants.INVALID_FUNCTION.replace("$", "onCustomButtonClicked")
-      );
-      return;
-    }
-
-    this.onCustomButtonClickedCallback = callback;
-  }
-
   //************************************* RESOURCES *****************************************************************/
 
   public getResources(callback: GetResourcesCallback): void {
@@ -742,10 +741,10 @@ export class Swrve {
       .getResources(this.profileManager.currentUser.userId)
       .then((resources) => {
         if (resources) {
-          SwrveLogger.info("RESOURCES READILY AVAILABLE");
+          SwrveLogger.info("resources readily available");
           callback(resources);
         } else {
-          SwrveLogger.info("RESOURCES NEED TO BE RETRIEVED");
+          SwrveLogger.info("resources need to be retrieved");
           this.profileManager.clearEtagHeader();
           this.getCampaignsAndResources()
             .then((response) => {
@@ -803,7 +802,7 @@ export class Swrve {
 
   //*****************************************************************************************************************/
 
-  public showCampaign(
+  public showMessageCenterCampaign(
     campaign: ISwrveCampaign,
     personalizationProperties?: IDictionary<string>
   ): boolean {
@@ -811,11 +810,17 @@ export class Swrve {
       {},
       personalizationProperties
     );
-    return this.campaignManager.showCampaign(campaign, properties);
+    return this.campaignManager.showCampaign(campaign, properties, (msg) =>
+      this.queueMessageImpressionEvent(msg)
+    );
   }
 
   public markMessageCenterCampaignAsSeen(campaign: ISwrveCampaign): void {
     this.campaignManager.markCampaignAsSeen(campaign);
+  }
+
+  public removeMessageCenterCampaign(campaign: ISwrveCampaign): void {
+    this.campaignManager.removeMessageCenterCampaign(campaign);
   }
 
   public shutdown(): void {
@@ -846,7 +851,7 @@ export class Swrve {
       this.campaignManager.checkTriggers(
         triggerName,
         payload,
-        (msg) => this.handleMessage(msg),
+        (msg) => this.queueMessageImpressionEvent(msg),
         qa,
         personalization
       );
@@ -966,7 +971,7 @@ export class Swrve {
   }
 
   private startNewSession(): void {
-    SwrveLogger.info("Start new session");
+    SwrveLogger.info("start new session");
     this.pauseSDK = false;
     this.autoShowEnabled = true; //reset this as it may have timed out
 
@@ -1006,8 +1011,8 @@ export class Swrve {
       this.profileManager.getNextSequenceNumber()
     );
 
-    if (type === SwrveConstants.DISMISS && this.onIAMDismissedCallback) {
-      this.onIAMDismissedCallback();
+    if (type === SwrveConstants.DISMISS && this.onDismissButtonCallback) {
+      this.onDismissButtonCallback();
     } else if (type === SwrveConstants.CUSTOM) {
       if (action.match(/^https?:\/\//)) {
         this.platform.openLink(action);
@@ -1020,7 +1025,7 @@ export class Swrve {
   }
 
   private autoShowMessages(): void {
-    SwrveLogger.debug("AUTO SHOW MESSAGES " + this.autoShowEnabled);
+    SwrveLogger.debug("auto show messages " + this.autoShowEnabled);
     if (!this.autoShowEnabled) {
       return;
     }
@@ -1047,7 +1052,7 @@ export class Swrve {
   > {
     const query = this.getQueryString(this.profileManager.currentUser.etag);
     const path = `${this.config.ContentUrl}/api/1/user_content?${query}`;
-
+    SwrveLogger.info("update campagins: ", path);
     return await this.restClient.get<ISwrveCampaignResourceResponse>(path);
   }
 
@@ -1159,7 +1164,7 @@ export class Swrve {
 
   private initSDK(): void {
     SwrveLogger.debug(
-      "Identified-only tracking: " +
+      "identified-only tracking: " +
         this.identifiedOnlyTracking +
         " isAnonymous: " +
         this.profileManager.currentUser.isAnonymous
@@ -1171,7 +1176,7 @@ export class Swrve {
       this.autoShowEnabled = false;
       const isValid = this.profileManager.hasSessionRestored();
       if (!isValid) {
-        SwrveLogger.debug("Setting autoShowBack to true");
+        SwrveLogger.debug("setting autoShowBack to true");
         this.queueStartSessionEvent();
         this.checkFirstUserInitiated();
         this.autoShowEnabled = true;
@@ -1179,7 +1184,7 @@ export class Swrve {
 
       this.disableAutoShowAfterDelay();
       this.sendQueuedEvents(this.profileManager.currentUser.userId, true);
-      SwrveLogger.info("Swrve Config: ", this.config.getReadonlyVersion());
+      SwrveLogger.info("config: ", this.config.getReadonlyVersion());
 
       if (this.onSwrveCoreReadyCallback) {
         this.onSwrveCoreReadyCallback();
@@ -1192,7 +1197,7 @@ export class Swrve {
   private disableAutoShowAfterDelay(): void {
     setTimeout(() => {
       SwrveLogger.debug(
-        "AUTO SHOW TIMED OUT " +
+        "Auto show timed out " +
           this.config.InAppMessageConfig.autoShowMessagesMaxDelay
       );
       this.autoShowEnabled = false;
@@ -1232,8 +1237,11 @@ export class Swrve {
 
   private handleCampaigns(response: ISwrveCampaignResourceResponse): void {
     if (response && Object.keys(response).length !== 0) {
-      this.campaignManager.storeCampaigns(response, () => {
-        SwrveLogger.debug("ON ASSETS LOADED");
+
+      const personalizationProperties = this.retrievePersonalizationProperties();
+
+      this.campaignManager.storeCampaigns(response, personalizationProperties, () => {
+        SwrveLogger.debug("assets looaded");
         this.autoShowMessages();
       });
       this.handleQAUser(response);
@@ -1327,6 +1335,9 @@ export class Swrve {
   }
 
   private validateEventName(name: string): void {
+    if (name == null || name.trim() === '') {
+      throw new Error(SwrveConstants.EMPTY_EVENT_NAME);
+    }
     if (/[Ss]wrve/.exec(name)) {
       throw new Error(SwrveConstants.INVALID_EVENT_NAME);
     }
@@ -1381,7 +1392,7 @@ export class Swrve {
 
     this.qaLogging.deviceUpdate(evt);
 
-    SwrveLogger.info("Swrve Device Properties: ", deviceProperties);
+    SwrveLogger.info("device properties: ", deviceProperties);
   }
 
   private transformResourcesDiff(

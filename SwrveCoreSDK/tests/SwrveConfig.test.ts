@@ -57,9 +57,6 @@ describe("SWRVE CONFIG TESTS", () => {
       expect(config.EventsUrl).toBe("https://api.example.org/");
       expect(config.InAppMessageConfig.autoShowMessagesMaxDelay).toBe(1000);
       expect(config.InAppMessageConfig.defaultBackgroundColor).toBe("#FFFFFF");
-      expect(config.InAppMessageConfig.defaultButtonStyle).toEqual({
-        border: "none",
-      });
       expect(config.InAppMessageConfig.defaultButtonFocusStyle).toEqual({
         border: "5px solid red",
       });

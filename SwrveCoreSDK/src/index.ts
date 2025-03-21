@@ -24,6 +24,7 @@ import {
   ISwrveEmbeddedMessage,
   ISwrveMessage,
   IUserResource,
+  ISwrveAsset,
 } from "./interfaces/ISwrveCampaign";
 import { IUserInfo } from "./interfaces/IUser";
 import IDictionary from "./interfaces/IDictionary";
@@ -34,7 +35,7 @@ import { IAsset } from "./interfaces/IAsset";
 import { IKeyMapping } from "./interfaces/IKeymapping";
 import { generateUuid } from "./utils/uuid";
 import { SwrveResource } from "./Resources/SwrveResource";
-import SwrveFocusManager, { MenuDirection } from "./UIElements/SwrveFocusManager";
+import SwrveFocusManager, { MenuDirection } from "./Campaigns/Messages/UIElements/SwrveFocusManager";
 
 export {
   SwrveCoreSDK,
@@ -59,6 +60,7 @@ export {
   IUserResource,
   SwrveResource,
   ISwrveMessage,
+  ISwrveAsset,
   IReward,
   IPushEvent,
   IAsset,

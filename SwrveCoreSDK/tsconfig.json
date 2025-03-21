@@ -3,8 +3,9 @@
     /* Language and Environment */
     "target": "es5",                                    
     "lib": [
-      "es5",
+      "es6",
       "dom",
+      "dom.iterable",
       "scripthost",
       "es2015.promise"
     ],

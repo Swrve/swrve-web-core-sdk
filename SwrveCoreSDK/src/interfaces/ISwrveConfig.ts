@@ -1,11 +1,15 @@
 import IDictionary from "./IDictionary";
-import { ISwrveEmbeddedMessage } from "./ISwrveCampaign";
+import { ISwrveEmbeddedMessage, ISwrveMessage } from "./ISwrveCampaign";
 
 export type Stack = 'us'|'eu';
 
 export declare type OnEmbeddedMessageListener = (msg: ISwrveEmbeddedMessage, personalizationProperties?: IDictionary<string>) => void;
 export declare type OnPersonalizationProvider = (eventPayload: IDictionary<string>) => IDictionary<string> ;
 export declare type OnWebPushAPIKeyListener = (key: string, autoSubscribe: boolean) => void;
+export declare type OnDismissButtonListener = () => void;
+export declare type OnCustomButtonListener = (customString: string) => void;
+export declare type OnClipboardButtonListener = (clipboardContents: string) => void;
+export declare type OnMessageListener = (msg: ISwrveMessage) => void;
 
 export interface ICSSStyle {
   [key: string]: string;
@@ -14,9 +18,13 @@ export interface ICSSStyle {
 export interface ISwrveInAppMessageConfig {
   autoShowMessagesMaxDelay: number;
   defaultBackgroundColor?: string;
-  defaultButtonStyle?: ICSSStyle | string;
   defaultButtonFocusStyle?: ICSSStyle | string;
-  /**TODO: add custom button / dismiss / other button listeners */
+  defaultTextForegroundColor?: string;
+  defaultTextBackgroundColor?: string;
+  defaultTextFontStyle?: string;
+  customButtonListener?: OnCustomButtonListener;
+  clipboardButtonListener?: OnClipboardButtonListener;
+  dismissButtonListener?: OnDismissButtonListener;
 }
 
 export interface ISwrveEmbeddedMessageConfig {

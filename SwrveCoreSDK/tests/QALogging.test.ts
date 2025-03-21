@@ -1,4 +1,5 @@
 import { QALogging } from "../src/Events/QALogging";
+import DateHelper from "../src/utils/DateHelper";
 import { ISwrveConfig } from "../src/interfaces/ISwrveConfig";
 import SwrveConfig from "../src/Config/SwrveConfig";
 import { StorageManager } from "../src/Storage/StorageManager";
@@ -20,7 +21,6 @@ import {
   IQAUserUpdateEvent,
 } from "../src/interfaces/IQAEvents";
 import { ICampaignDownloadData } from "../src/Events/EventTypeInterfaces";
-import DateHelper from "../src/utils/DateHelper";
 
 const userId = "SwrveDevice";
 const configInterface = {
