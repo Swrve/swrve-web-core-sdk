@@ -50,6 +50,7 @@ import { SwrveImage } from "./Messages/UIElements/SwrveImage";
 import SwrveConfig from "../Config/SwrveConfig";
 import { IDictionary } from "..";
 import DateHelper from "../utils/DateHelper";
+import { TextTemplating } from "../utils/TextTemplating";
 
 export type OnAssetsLoaded = () => void;
 
@@ -117,6 +118,7 @@ export class CampaignManager {
     if (response.campaigns) {
       this.handleCDN(response);
       this.campaigns = response.campaigns.campaigns || [];
+      this.updateEmbeddedMessagesRawData(this.campaigns);
       this.parseGlobalRules(response.campaigns);
       this.parseMessages(this.campaigns);
       this.parseTriggers(this.campaigns);
@@ -144,6 +146,7 @@ export class CampaignManager {
     const storedCampaigns = this.storageManager.getData(CAMPAIGNS + userId);
     if (storedCampaigns) {
       this.campaigns = JSON.parse(storedCampaigns);
+      this.updateEmbeddedMessagesRawData(this.campaigns);
     }
 
     const campaignState = this.storageManager.getData(CAMPAIGN_STATE + userId);
@@ -531,6 +534,55 @@ export class CampaignManager {
       .map((campaign) => ({ ...campaign }));
   }
 
+  public getEmbeddedMessageCenterCampaigns(
+    personalizationProperties?: IDictionary<string>
+  ): ISwrveEmbeddedMessage[] {
+    return this.campaigns
+      .filter(
+        (campaign) =>
+          campaign.message_center &&
+          campaign.embedded_message &&
+          this.campaignState[campaign.id].status !== SWRVE_CAMPAIGN_STATUS_DELETED &&
+          this.isCampaignActive(campaign, this.getNow())
+      )
+      .map((campaign) => {
+        const embeddedOriginal = campaign.embedded_message!;
+
+        // Clone so we don't mutate original campaign
+        const embedded = {
+          ...embeddedOriginal,
+          data: embeddedOriginal.data,
+          dataRaw: embeddedOriginal.data // Will be replaced below
+      };
+
+        try {
+          let personalized: string | null;
+
+          if (embedded.type === "json") {
+            personalized = TextTemplating.applyTextTemplatingToJSON(
+              embedded.dataRaw,
+              personalizationProperties
+            );
+          } else {
+            personalized = TextTemplating.applyTextTemplatingToString(
+              embedded.dataRaw,
+              personalizationProperties
+            );
+          }
+
+          if (personalized != null) {
+            embedded.data = personalized;
+          }
+
+        } catch {
+          // leave as is
+        }
+
+        return embedded;
+      });
+
+  }
+
   public updateCampaignState(message: ISwrveBaseMessage): void {
     for (const parentCampaign of this.campaigns) {
       if (parentCampaign.id === message.parentCampaign!) {
@@ -810,5 +862,29 @@ export class CampaignManager {
 
   private getNow(): number {
     return DateHelper.nowInUtcTime();
+  }
+
+  private updateEmbeddedMessagesRawData(
+  campaigns: ReadonlyArray<ISwrveCampaign>
+  ): void {
+    campaigns.forEach((campaign) => {
+      if (campaign.embedded_message) {
+        const msg = campaign.embedded_message;
+        //update dataRaw to always be present
+        (msg as ISwrveEmbeddedMessage).dataRaw = msg.data;
+      }
+    });
+  }
+
+  private isCampaignActive(campaign: ISwrveCampaign, now: number): boolean {
+    if (campaign.start_date >= now) {
+      return false;
+    }
+
+    if (now >= campaign.end_date) {
+      return false;
+    }
+
+    return true;
   }
 }

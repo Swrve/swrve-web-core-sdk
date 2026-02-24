@@ -555,6 +555,13 @@ export class Swrve {
     return null;
   }
 
+  public getEmbeddedMessageCenterCampaigns(
+    personalizationProperties?: IDictionary<string>
+  ): ISwrveEmbeddedMessage[] {
+    const properties = this.retrievePersonalizationProperties(undefined, personalizationProperties);
+    return this.campaignManager.getEmbeddedMessageCenterCampaigns(properties);
+  }
+
   //******************************************** Lifecycle *********************************************************/
 
   public stop(): void {
@@ -1338,7 +1345,11 @@ export class Swrve {
     if (name == null || name.trim() === '') {
       throw new Error(SwrveConstants.EMPTY_EVENT_NAME);
     }
-    if (/[Ss]wrve/.exec(name)) {
+
+    const isSafelisted = name.startsWith('Swrve.permission.web.push_notifications');
+
+    // Only block "swrve" events if they're NOT in the safelist
+    if (/[Ss]wrve/.test(name) && !isSafelisted) {
       throw new Error(SwrveConstants.INVALID_EVENT_NAME);
     }
   }

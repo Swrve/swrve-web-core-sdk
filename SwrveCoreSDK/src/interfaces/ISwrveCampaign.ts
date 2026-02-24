@@ -96,6 +96,9 @@ export interface ISwrveBaseMessage {
 }
 
 export interface ISwrveEmbeddedMessage extends ISwrveBaseMessage {
+ /** Original, unpersonalized content as received from the server */
+  dataRaw: string;
+  /** Personalized content (may differ from dataRaw) */
   data: string;
   buttons: ReadonlyArray<string>;
   type: "other" | "json";

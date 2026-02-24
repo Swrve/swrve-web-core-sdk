@@ -313,4 +313,11 @@ describe("CAMPAIGN PARSER TESTS", () => {
 
     expect(results).toHaveLength(0);
   });
+
+  it("always sets dataRaw on embedded messages", () => {
+    const subject =  setUpCampaignManagerWithData(embeddedMessageCenter);
+    const messages =  subject.getEmbeddedMessageCenterCampaigns();
+    
+    expect(messages[0].dataRaw).toBe(messages[0].data);
+  });
 });

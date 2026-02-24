@@ -269,6 +269,10 @@ export class SwrveCoreSDK {
     );
   }
 
+  public static getEmbeddedMessageCenterCampaigns(personalization?: IDictionary<string>) {
+        return SwrveCoreSDK.checkInstance().getEmbeddedMessageCenterCampaigns(personalization);
+  }
+
   //*************************************** Message Center *******************************//
 
   public static getMessageCenterCampaigns(
