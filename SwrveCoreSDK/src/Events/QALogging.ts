@@ -13,12 +13,14 @@ import {
   IQAButtonClickedEvent,
   IQACurrencyGivenEvent,
   IQADeviceUpdateEvent,
+  IQAGenericCampaignEvent,
   IQAIAPEvent,
   IQANamedEvent,
   IQAPurchaseEvent,
   IQASessionStartEvent,
   IQAUserUpdateEvent,
 } from "../interfaces/IQAEvents";
+import IGenericCampaignEvent from "../interfaces/IGenericCampaignEvent";
 import SwrveConfig from "../Config/SwrveConfig";
 import { ProfileManager } from "../Profile/ProfileManager";
 import SwrveEvent from "../WebApi/Events/SwrveEvent";
@@ -81,8 +83,11 @@ export class QALogging {
           type: "event",
           parameters: {
             name: event.name,
-            payload: event.payload,
           },
+          // babble only accepts the QA-log payload as a JSON string (not a
+          // proper object), defaulting to "{}" — matches iOS/Android.
+          payload:
+            event.payload !== undefined ? JSON.stringify(event.payload) : "{}",
           seqnum: event.seqnum,
           client_time: event.time,
         },
@@ -274,6 +279,33 @@ export class QALogging {
         time: DateHelper.nowInUtcTime(),
         log_type: "campaigns-downloaded",
       } as ICampaignsDownloadedEvent;
+      this.queueQAEvent(logEvent);
+    }
+  }
+
+  public genericCampaignEvent(event: IGenericCampaignEvent): void {
+    if (this.shouldBeLogging()) {
+      const logEvent: IQAGenericCampaignEvent = {
+        log_source: LOG_SOURCE_SDK,
+        log_details: {
+          type: "generic_campaign_event",
+          parameters: {
+            campaignType: event.campaignType,
+            actionType: event.actionType,
+            id: event.id,
+            ...(event.contextId !== undefined && { contextId: event.contextId }),
+            ...(event.mediaId !== undefined && { mediaId: event.mediaId }),
+          },
+          ...(event.payload !== undefined && {
+            payload: JSON.stringify(event.payload),
+          }),
+          seqnum: event.seqnum,
+          client_time: event.time,
+        },
+        type: LOG_TYPE,
+        time: event.time,
+        log_type: LOG_TYPE_EVENT,
+      };
       this.queueQAEvent(logEvent);
     }
   }

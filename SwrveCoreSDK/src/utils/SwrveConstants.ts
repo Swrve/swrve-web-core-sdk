@@ -1,11 +1,13 @@
 /* Swrve API */
 export const SWRVE_EVENTS_API_VERSION = 3;
-export const SWRVE_USER_CONTENT_API_VERSION = "8";
-export const SWRVE_EMBEDDED_CAMPAIGN_VERSION = "1";
+export const SWRVE_USER_CONTENT_API_VERSION = "10";
+export const SWRVE_EMBEDDED_CAMPAIGN_VERSION = "3";
+export const SWRVE_PUSH_INBOX_VERSION = "1";
 
-//there is code for IAMs in this SDK, that is mostly compatibile with in app version 3
-//but not fully supported yet. For now setting to 0 which will not return any IAM campaigns
-export const SWRVE_IN_APP_CAMPAIGN_VERSION = "0";
+/* Push event_type emitted by the service worker when a push is received (delivered) */
+export const SWRVE_PUSH_RECEIVED_EVENT_TYPE = "swrve.push_received";
+
+export const SWRVE_IN_APP_CAMPAIGN_VERSION = "17";
 
 /* device properties */
 export const SWRVE_DEVICE_NAME = "swrve.device_name";
@@ -56,6 +58,8 @@ export const CAMPAIGN_COULD_NOT_PERSONALIZE = 11;
 export const CAMPAIGN_STATE = "campaignState.";
 export const CAMPAIGNS = "campaigns.";
 export const REAL_TIME_USER_PROPERTIES = "real_time_user_properties.";
+export const PUSH_INBOX = "push_inbox.";
+export const PUSH_INBOX_HASH = "push_inbox_hash.";
 
 /* Identity */
 export const EXISTING_EXTERNAL_ID_MATCHES_SWRVE_ID =

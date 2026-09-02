@@ -6,9 +6,11 @@ import ISessionStartEvent from "../../interfaces/ISessionStartEvent";
 import IUserUpdateEvent from "../../interfaces/IUserUpdateEvent";
 import QAEvent from "./QA/QAEvent";
 import IDeviceUpdateEvent from "../../interfaces/IDeviceUpdateEvent";
+import IGenericCampaignEvent from "../../interfaces/IGenericCampaignEvent";
 
 type SwrveEvent =
   | QAEvent
+  | IGenericCampaignEvent
   | ICurrencyGivenEvent
   | IIAPEvent
   | INamedEvent

@@ -29,6 +29,10 @@ export class MockSwrveRestClient implements IRestClient {
     return await this.http<U>();
   }
 
+  public async postForm<U>(path: string, body: string, config?: any): Promise<IHttpResponse<U>> {
+    return await this.http<U>();
+  }
+
   private async http<T>(): Promise<IHttpResponse<T>> {
     this.response.throwsNetworkError();
     const _response: IHttpResponse<T> = {

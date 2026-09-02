@@ -4,6 +4,7 @@ import {
   IQAButtonClickedEvent,
   IQACurrencyGivenEvent,
   IQADeviceUpdateEvent,
+  IQAGenericCampaignEvent,
   IQAIAPEvent,
   IQANamedEvent,
   IQAPurchaseEvent,
@@ -21,6 +22,7 @@ type QAEvent =
   | IQAPurchaseEvent
   | IQAIAPEvent
   | IQACurrencyGivenEvent
-  | IQADeviceUpdateEvent;
+  | IQADeviceUpdateEvent
+  | IQAGenericCampaignEvent;
 
 export default QAEvent;

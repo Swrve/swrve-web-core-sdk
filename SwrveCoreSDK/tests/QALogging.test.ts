@@ -68,7 +68,50 @@ describe("QALogging: Create Events", () => {
     expect(result.log_details.type).toBe("event");
     expect(result.log_details.seqnum).toBe(1);
     expect(result.log_details.parameters.name).toBe("eventName");
-    expect(result.log_details.parameters.payload).toEqual({});
+    // payload must be a sibling of parameters (matches iOS + Android),
+    // never nested inside parameters, and serialized as a JSON string
+    // (the babble QA endpoint only accepts payload as a string)
+    expect((result.log_details.parameters as any).payload).toBeUndefined();
+    expect(result.log_details.payload).toBe("{}");
+  });
+
+  it("Create QA Log of an impression event with payload at top level", () => {
+    const impression: any = factory.getImpressionEvent(
+      { id: 716734 } as any,
+      2,
+      { deviceType: "desktop", embedded: "false", platform: "Web" }
+    );
+
+    subject.namedEvent(impression);
+    const result = subject.getQueue()[0] as IQANamedEvent;
+
+    expect(result.log_details.parameters.name).toBe(
+      "Swrve.Messages.Message-716734.impression"
+    );
+    // payload is a sibling of parameters, and parameters carries only the name
+    expect((result.log_details.parameters as any).payload).toBeUndefined();
+    // payload is a JSON string, not a proper object
+    expect(typeof result.log_details.payload).toBe("string");
+    expect(JSON.parse(result.log_details.payload)).toEqual({
+      deviceType: "desktop",
+      embedded: "false",
+      platform: "Web",
+    });
+  });
+
+  it("Create QA Log of a named event with no payload defaults to '{}'", () => {
+    const impression: any = factory.getImpressionEvent(
+      { id: 999 } as any,
+      3
+    );
+
+    subject.namedEvent(impression);
+    const result = subject.getQueue()[0] as IQANamedEvent;
+
+    expect(result.log_details.parameters.name).toBe(
+      "Swrve.Messages.Message-999.impression"
+    );
+    expect(result.log_details.payload).toBe("{}");
   });
 
   it("Create QA Log of a userUpdate", () => {

@@ -15,7 +15,11 @@ export class AssetManager {
         SwrveLogger.info("add new asset " + key);
         this.assets[key] = {
           id: key,
-          path: asset.getAssetPath().toString()
+          path: asset.getAssetPath().toString(),
+          /* the platform cannot tell a video from an image by its path - video
+             assets arrive as arbitrary third-party URLs - so flag it here and
+             let the platform pick how to cache it */
+          isVideo: !!asset.isVideo
         };
       }
     }

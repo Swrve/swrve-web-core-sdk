@@ -58,6 +58,90 @@ describe("EventFactory: Create Events", () => {
     expect(event.seqnum).toBe(1);
     expect(event.payload.name).toBe("button1");
     expect(event.payload.embedded).toBe("false");
+    // No context supplied -> payload stays minimal (parity with embedded clicks)
+    expect(event.payload.buttonId).toBeUndefined();
+    expect(event.payload.contextId).toBeUndefined();
+    expect(event.payload.pageName).toBeUndefined();
+  });
+
+  it("Create ButtonClickEvent with page/button context (iOS/Android parity)", () => {
+    const testBaseMessage = { id: 1234 } as ISwrveBaseMessage;
+
+    const event: any = subject.getButtonClickEvent(
+      1,
+      testBaseMessage,
+      "button1",
+      "false",
+      { buttonId: 7, contextId: 42, pageName: "home" }
+    );
+
+    expect(event.payload.name).toBe("button1");
+    expect(event.payload.embedded).toBe("false");
+    expect(event.payload.buttonId).toBe(7);
+    expect(event.payload.contextId).toBe(42);
+    expect(event.payload.pageName).toBe("home");
+  });
+
+  it("ButtonClickEvent omits context fields that are undefined", () => {
+    const testBaseMessage = { id: 1234 } as ISwrveBaseMessage;
+
+    const event: any = subject.getButtonClickEvent(
+      1,
+      testBaseMessage,
+      "button1",
+      "false",
+      { buttonId: 3 }
+    );
+
+    expect(event.payload.buttonId).toBe(3);
+    expect(event.payload).not.toHaveProperty("contextId");
+    expect(event.payload).not.toHaveProperty("pageName");
+  });
+
+  it("Generic campaign event accepts an explicit time", () => {
+    const event: any = subject.getGenericCampaignEvent(
+      2,
+      "push",
+      "delivered",
+      "1",
+      undefined,
+      { displayed: "true" },
+      undefined,
+      1701873418769
+    );
+
+    expect(event.type).toBe("generic_campaign_event");
+    expect(event.campaignType).toBe("push");
+    expect(event.actionType).toBe("delivered");
+    expect(event.id).toBe("1");
+    expect(event.time).toBe(1701873418769);
+  });
+
+  it("Create generic campaign event", () => {
+    const event: any = subject.getGenericCampaignEvent(
+      2,
+      "iam",
+      "navigation",
+      740417,
+      1,
+      {
+        pageName: "first",
+        to: 2,
+        buttonId: 1,
+        buttonName: "Next",
+      }
+    );
+
+    expect(event.type).toBe("generic_campaign_event");
+    expect(event.seqnum).toBe(2);
+    expect(event.campaignType).toBe("iam");
+    expect(event.actionType).toBe("navigation");
+    expect(event.id).toBe(740417);
+    expect(event.contextId).toBe(1);
+    expect(event.payload.pageName).toBe("first");
+    expect(event.payload.to).toBe(2);
+    expect(event.payload.buttonId).toBe(1);
+    expect(event.payload.buttonName).toBe("Next");
   });
 
   it("Create UserUpdateWithDate custom key name", () => {

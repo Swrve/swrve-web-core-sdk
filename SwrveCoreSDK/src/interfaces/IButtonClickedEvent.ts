@@ -5,6 +5,11 @@ export default interface IButtonClickedEvent {
   name: string;
   payload: {
     name: string,
-    embedded: string
+    embedded: string,
+    buttonId?: number,
+    contextId?: number,
+    pageName?: string,
+    platform?: string,
+    deviceType?: string
   };
 }

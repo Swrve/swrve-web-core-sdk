@@ -89,8 +89,100 @@ describe("Campaign Manager Trigger Tests", () => {
             conditions: { key: "key1", value: "value1", op: "eq" },
         };
         expect(cm.canTriggerWithPayload(triggerJSON, { key1: "value1", key2: "value2" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { key1: "VALUE1" })).toBe(true);
         expect(cm.canTriggerWithPayload(triggerJSON, { key2: "value2" })).toBe(false);
         expect(cm.canTriggerWithPayload(triggerJSON, {})).toBe(false);
+    });
+
+    it("triggers contains condition case-insensitively", () => {
+        const triggerJSON: ISwrveTrigger = {
+            event_name: "test.eventName",
+            conditions: { key: "destination", value: "dub", op: "contains" },
+        };
+        expect(cm.canTriggerWithPayload(triggerJSON, { destination: "Dublin" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { destination: "London" })).toBe(false);
+        expect(cm.canTriggerWithPayload(triggerJSON, {})).toBe(false);
+    });
+
+    it("triggers contains condition for numeric payloads", () => {
+        const triggerJSON: ISwrveTrigger = {
+            event_name: "test.eventName",
+            conditions: { key: "passengers", value: "12", op: "contains" },
+        };
+        expect(cm.canTriggerWithPayload(triggerJSON, { passengers: 123 })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { passengers: 45 })).toBe(false);
+    });
+
+    it("triggers numeric equals condition", () => {
+        const triggerJSON: ISwrveTrigger = {
+            event_name: "test.eventName",
+            conditions: { key: "score", value: 10, op: "number_eq" },
+        };
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 10 })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: "10" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 11 })).toBe(false);
+        expect(cm.canTriggerWithPayload(triggerJSON, {})).toBe(false);
+    });
+
+    it("triggers numeric greater than condition", () => {
+        const triggerJSON: ISwrveTrigger = {
+            event_name: "test.eventName",
+            conditions: { key: "score", value: 10, op: "number_gt" },
+        };
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 11 })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: "11" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 10 })).toBe(false);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 9 })).toBe(false);
+    });
+
+    it("triggers numeric less than condition", () => {
+        const triggerJSON: ISwrveTrigger = {
+            event_name: "test.eventName",
+            conditions: { key: "score", value: 10, op: "number_lt" },
+        };
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 9 })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: "9" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 10 })).toBe(false);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 11 })).toBe(false);
+    });
+
+    it("triggers numeric between condition with exclusive bounds", () => {
+        const triggerJSON: ISwrveTrigger = {
+            event_name: "test.eventName",
+            conditions: { key: "score", value: { lower: 10, upper: 20 }, op: "number_between" },
+        };
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 11 })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: "19" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 10 })).toBe(false);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 20 })).toBe(false);
+    });
+
+    it("triggers numeric not between condition with exclusive bounds", () => {
+        const triggerJSON: ISwrveTrigger = {
+            event_name: "test.eventName",
+            conditions: { key: "score", value: { lower: 10, upper: 20 }, op: "number_not_between" },
+        };
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 9 })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: "21" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 10 })).toBe(false);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 20 })).toBe(false);
+        expect(cm.canTriggerWithPayload(triggerJSON, { score: 15 })).toBe(false);
+    });
+
+    it("triggers when any or condition passes", () => {
+        const triggerJSON: ISwrveTrigger = {
+            event_name: "test.eventName",
+            conditions: {
+                args: [
+                    { key: "origin", value: "DUB", op: "eq" },
+                    { key: "destination", value: "York", op: "contains" },
+                ],
+                op: "or",
+            },
+        };
+        expect(cm.canTriggerWithPayload(triggerJSON, { origin: "LHR", destination: "New York" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { origin: "dub", destination: "London" })).toBe(true);
+        expect(cm.canTriggerWithPayload(triggerJSON, { origin: "LHR", destination: "London" })).toBe(false);
     });
 
     it("invalid trigger unknown operator", () => {
@@ -159,7 +251,7 @@ describe("Campaign Manager Trigger Tests", () => {
         expect(showMessage).toHaveBeenCalled();
         // jest mock produces a matrix of calls and arguments within
         const message: ISwrveMessage = showMessage.mock.calls[0][0];
-        expect(message.id).toBe(campaignTemplate.messages![0].id);
+        expect(message.id).toBe(campaignTemplate.message!.id);
     });
 
     it("campaign trigger two", () => {
@@ -174,7 +266,7 @@ describe("Campaign Manager Trigger Tests", () => {
         moveIAMOffscreen();
         expect(showMessage).toHaveBeenCalled();
         const message: ISwrveMessage = showMessage.mock.calls[0][0];
-        expect(message.id).toBe(campaignTemplate.messages![0].id);
+        expect(message.id).toBe(campaignTemplate.message!.id);
     });
 
     it("campaign trigger three", () => {
@@ -188,7 +280,7 @@ describe("Campaign Manager Trigger Tests", () => {
         cm.checkTriggers("song3.played", {}, impressionHandler);
         expect(showMessage).toHaveBeenCalled();
         const message: ISwrveMessage = showMessage.mock.calls[0][0];
-        expect(message.id).toBe(campaignTemplate.messages![0].id);
+        expect(message.id).toBe(campaignTemplate.message!.id);
     });
 
     it("campaign trigger one not satisfied", () => {

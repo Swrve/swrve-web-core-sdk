@@ -15,6 +15,13 @@ import IReward from "./interfaces/IReward";
 import IPushEvent from "./interfaces/IPushEvent";
 import { IPlatform } from "./interfaces/IPlatform";
 import SwrveEvent from "./WebApi/Events/SwrveEvent";
+import {
+  ISwrvePushInboxMessage,
+  ISwrvePushInboxResult,
+  OnPushInboxOperationComplete,
+  OnPushInboxUpdated,
+  SwrvePushInboxId,
+} from "./interfaces/IPushInbox";
 
 let swrve: Swrve | null = null;
 
@@ -98,6 +105,10 @@ export class SwrveCoreSDK {
 
   public static saveToStorage(): void {
     SwrveCoreSDK.checkInstance().saveToStorage();
+  }
+
+  public static refreshCampaignsAndResources(): Promise<void> {
+    return SwrveCoreSDK.checkInstance().refreshCampaignsAndResources();
   }
 
   public static shutdown(): void {
@@ -239,6 +250,14 @@ export class SwrveCoreSDK {
     SwrveCoreSDK.checkInstance().embeddedMessageWasShownToUser(message);
   }
 
+  public static embeddedControlMessageImpressionEvent(
+    message: ISwrveEmbeddedMessage
+  ) {
+    SwrveCoreSDK.checkInstance().embeddedControlMessageImpressionEvent(
+      message
+    );
+  }
+
   public static embeddedMessageButtonWasPressed(
     message: ISwrveEmbeddedMessage,
     buttonName: string
@@ -283,6 +302,24 @@ export class SwrveCoreSDK {
     );
   }
 
+  public static getInAppMessageCenterCampaigns(
+    personalizationProperties?: IDictionary<string>
+  ): ISwrveCampaign[] {
+    return SwrveCoreSDK.checkInstance().getInAppMessageCenterCampaigns(
+      personalizationProperties
+    );
+  }
+
+  public static getMessageCenterCampaign(
+    campaignID: number,
+    personalizationProperties?: IDictionary<string>
+  ): ISwrveCampaign | null {
+    return SwrveCoreSDK.checkInstance().getMessageCenterCampaign(
+      campaignID,
+      personalizationProperties
+    );
+  }
+
   public static showMessageCenterCampaign(
     campaign: ISwrveCampaign,
     personalizationProperties?: IDictionary<string>
@@ -294,13 +331,55 @@ export class SwrveCoreSDK {
   }
 
   public static markMessageCenterCampaignAsSeen(
-    campaign: ISwrveCampaign
+    campaign: ISwrveCampaign | number
   ): void {
     SwrveCoreSDK.checkInstance().markMessageCenterCampaignAsSeen(campaign);
   }
 
-  public static removeMessageCenterCampaign(campaign: ISwrveCampaign): void {
+  public static removeMessageCenterCampaign(
+    campaign: ISwrveCampaign | number
+  ): void {
     SwrveCoreSDK.checkInstance().removeMessageCenterCampaign(campaign);
+  }
+
+  //*************************************** Push Inbox *******************************//
+
+  public static pushInboxMessages(): ISwrvePushInboxMessage[] {
+    return SwrveCoreSDK.checkInstance().pushInboxMessages();
+  }
+
+  public static readPushInboxMessage(
+    messageId: SwrvePushInboxId,
+    listener?: OnPushInboxOperationComplete
+  ): Promise<ISwrvePushInboxResult> {
+    return SwrveCoreSDK.checkInstance().readPushInboxMessage(
+      messageId,
+      listener
+    );
+  }
+
+  public static deletePushInboxMessage(
+    messageId: SwrvePushInboxId,
+    listener?: OnPushInboxOperationComplete
+  ): Promise<ISwrvePushInboxResult> {
+    return SwrveCoreSDK.checkInstance().deletePushInboxMessage(
+      messageId,
+      listener
+    );
+  }
+
+  public static engagePushInboxMessage(
+    messageId: SwrvePushInboxId,
+    listener?: OnPushInboxOperationComplete
+  ): Promise<ISwrvePushInboxResult> {
+    return SwrveCoreSDK.checkInstance().engagePushInboxMessage(
+      messageId,
+      listener
+    );
+  }
+
+  public static pushInboxUpdateListener(listener: OnPushInboxUpdated): void {
+    SwrveCoreSDK.checkInstance().pushInboxUpdateListener(listener);
   }
 
   //**************************************** Push Only **********************************//

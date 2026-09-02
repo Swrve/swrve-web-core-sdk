@@ -9,8 +9,8 @@ export interface IQANamedEvent {
     readonly type: "event";
     readonly parameters: {
       readonly name: string;
-      readonly payload?: IDictionary<string | number>;
     };
+    readonly payload: string;
     readonly seqnum: number;
     readonly client_time: number;
   };
@@ -122,6 +122,26 @@ export interface IQASessionStartEvent {
   readonly log_details: {
     readonly type: "session_start";
     readonly parameters: {};
+    readonly seqnum: number;
+    readonly client_time: number;
+  };
+  readonly type: "qa_log_event";
+  readonly time: number;
+  readonly log_type: "event";
+}
+
+export interface IQAGenericCampaignEvent {
+  readonly log_source: "sdk";
+  readonly log_details: {
+    readonly type: "generic_campaign_event";
+    readonly parameters: {
+      readonly campaignType: string;
+      readonly actionType: string;
+      readonly id: string | number;
+      readonly contextId?: string | number;
+      readonly mediaId?: string | number;
+    };
+    readonly payload?: string;
     readonly seqnum: number;
     readonly client_time: number;
   };

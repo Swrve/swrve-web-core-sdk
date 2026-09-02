@@ -17,6 +17,7 @@ import ICurrencyGivenEvent from "../interfaces/ICurrencyGivenEvent";
 import { validateRewards } from "./EventValidators";
 import IButtonClickedEvent from "../interfaces/IButtonClickedEvent";
 import DateHelper from "../utils/DateHelper";
+import IGenericCampaignEvent from "../interfaces/IGenericCampaignEvent";
 
 export class EventFactory {
   /************************ Named Event ***********************************************************/
@@ -177,17 +178,36 @@ export class EventFactory {
     seqnum: number,
     message: ISwrveBaseMessage,
     name: string,
-    embedded: string
+    embedded: string,
+    context?: {
+      buttonId?: number;
+      contextId?: number;
+      pageName?: string;
+    }
   ): IButtonClickedEvent {
+    const payload: IButtonClickedEvent["payload"] = {
+      name,
+      embedded,
+    };
+
+    if (context) {
+      if (context.buttonId !== undefined) {
+        payload.buttonId = context.buttonId;
+      }
+      if (context.contextId !== undefined) {
+        payload.contextId = context.contextId;
+      }
+      if (context.pageName !== undefined) {
+        payload.pageName = context.pageName;
+      }
+    }
+
     return {
       type: "event",
       time: DateHelper.nowInUtcTime(),
       seqnum,
       name: "Swrve.Messages.Message-" + message.id + ".click",
-      payload: {
-        name,
-        embedded
-      },
+      payload,
     };
   }
 
@@ -203,6 +223,43 @@ export class EventFactory {
       name: "Swrve.Messages.Message-" + message.id + ".impression",
       payload,
     };
+  }
+
+  public getGenericCampaignEvent(
+    seqnum: number,
+    campaignType: string,
+    actionType: string,
+    id: string | number,
+    contextId?: string | number,
+    payload?: IDictionary<string | number>,
+    mediaId?: string | number,
+    time: number = DateHelper.nowInUtcTime()
+  ): IGenericCampaignEvent {
+    const event: IGenericCampaignEvent = {
+      type: "generic_campaign_event",
+      time,
+      seqnum,
+      campaignType,
+      actionType,
+      id,
+      contextId,
+      mediaId,
+      payload,
+    };
+
+    if (contextId === undefined) {
+      delete (event as any).contextId;
+    }
+
+    if (mediaId === undefined) {
+      delete (event as any).mediaId;
+    }
+
+    if (payload === undefined) {
+      delete (event as any).payload;
+    }
+
+    return event;
   }
 
   public getCampaignTriggeredEvent(

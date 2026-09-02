@@ -6,6 +6,8 @@ import {
   ISwrveButton,
   ISwrveCampaign,
   ISwrveCampaignResourceResponse,
+  ISwrveButtonEvent,
+  ISwrveButtonPayloadItem,
   ISwrveEmbeddedMessage,
   IUserResource,
 } from "./interfaces/ISwrveCampaign";
@@ -34,12 +36,13 @@ import SwrveLogger from "./utils/SwrveLogger";
 import { EventManager } from "./Events/EventManager";
 import { RealTimeUserPropertiesManager } from "./UserProperties/RealTimeUserPropertiesManager";
 import { SwrveRestClient } from "./RestClient/SwrveRestClient";
+import { ISwrveConfig } from "./interfaces/ISwrveConfig";
 import {
-  ISwrveConfig,
-  OnClipboardButtonListener,
-  OnCustomButtonListener,
-  OnDismissButtonListener,
-} from "./interfaces/ISwrveConfig";
+  ISwrveMessageButtonDetails,
+  ISwrveMessageDetails,
+  OnSwrveInAppMessageListener,
+  SwrveMessageAction,
+} from "./interfaces/ISwrveMessageListener";
 import { queryDeviceProperties } from "./utils/DeviceProperties";
 import IResourceDiff from "./interfaces/IResourceDiff";
 import IDictionary from "./interfaces/IDictionary";
@@ -50,6 +53,7 @@ import { getInstallDateFormat } from "./utils/TimeHelper";
 import {
   SWRVE_EMBEDDED_CAMPAIGN_VERSION,
   SWRVE_IN_APP_CAMPAIGN_VERSION,
+  SWRVE_PUSH_INBOX_VERSION,
   SWRVE_USER_CONTENT_API_VERSION,
 } from "./utils/SwrveConstants";
 import { IQueryParams } from "./interfaces/IQueryParams";
@@ -63,6 +67,16 @@ import { ISwrveMessage } from "./interfaces/ISwrveCampaign";
 import { combineDictionaries } from "./utils/DictionaryHelper";
 import { TextTemplating } from "./utils/TextTemplating";
 import DateHelper from "./utils/DateHelper";
+import IGenericCampaignEvent from "./interfaces/IGenericCampaignEvent";
+import { ISwrveDataCaptureEvent, IButtonClickContext } from "./Campaigns/Messages/SwrveMessageDisplayManager";
+import { PushInboxManager } from "./PushInbox/PushInboxManager";
+import {
+  ISwrvePushInboxMessage,
+  ISwrvePushInboxResult,
+  OnPushInboxOperationComplete,
+  OnPushInboxUpdated,
+  SwrvePushInboxId,
+} from "./interfaces/IPushInbox";
 
 export class Swrve {
   public readonly profileManager: ProfileManager;
@@ -77,12 +91,12 @@ export class Swrve {
   private readonly storageManager: StorageManager;
   private readonly realTimeUserPropertiesManager: RealTimeUserPropertiesManager;
   private readonly qaLogging: QALogging;
+  private readonly pushInboxManager: PushInboxManager;
 
   private onResourcesLoadedCallback: OnResourcesLoadedCallback | null = null;
   private onCampaignLoadedCallback: OnCampaignLoadedCallback | null = null;
-  private onCustomButtonClickedCallback: OnCustomButtonListener | null = null;
-  private onDismissButtonCallback: OnDismissButtonListener | null = null;
-  private onClipboardButtonCallback: OnClipboardButtonListener | null = null;
+  private inAppMessageListener: OnSwrveInAppMessageListener | null = null;
+  private onPushInboxUpdatedCallback: OnPushInboxUpdated | null = null;
   private onSwrveCoreReadyCallback?: OnSwrveCoreReadyCallback;
 
   private eventLoopTimer: number = 0;
@@ -170,8 +184,16 @@ export class Swrve {
       );
     }
 
-    this.campaignManager.onButtonClicked((button, message) =>
-      this.handleButtonClicked(button, message)
+    this.setupInAppConfiguration(config);
+
+    this.campaignManager.onButtonClicked((button, message, context) =>
+      this.handleButtonClicked(button, message, context)
+    );
+    this.campaignManager.onGenericCampaignEvent((event) =>
+      this.handleGenericCampaignEvent(event)
+    );
+    this.campaignManager.onDataCaptureEvent((event) =>
+      this.handleDataCaptureEvent(event)
     );
 
     this.evtManager =
@@ -185,6 +207,19 @@ export class Swrve {
       );
 
     this.eventFactory = new EventFactory();
+
+    this.pushInboxManager = new PushInboxManager(
+      this.storageManager,
+      this.restClient,
+      this.eventFactory,
+      () => this.profileManager.currentUser.userId,
+      () => this.config.ApiKey,
+      () => this.config.ContentUrl,
+      () => this.profileManager.getNextSequenceNumber(),
+      (event) => this.queueEvent(event),
+      () => this.sendQueuedEvents(),
+      (event) => this.qaLogging.genericCampaignEvent(event)
+    );
 
     /* establish QALogging */
     this.qaLogging = new QALogging(
@@ -207,33 +242,16 @@ export class Swrve {
     }
   }
 
-  private setupInAppConfiguration(config: ISwrveConfig) {
+  private setupInAppConfiguration(config: Readonly<ISwrveConfig>) {
     if (!config.inAppMessageConfig) {
       return;
     }
 
     if (
-      config.inAppMessageConfig.customButtonListener &&
-      typeof config.inAppMessageConfig.customButtonListener === "function"
+      config.inAppMessageConfig.messageListener &&
+      typeof config.inAppMessageConfig.messageListener === "function"
     ) {
-      this.onCustomButtonClickedCallback =
-        config.inAppMessageConfig.customButtonListener;
-    }
-
-    if (
-      config.inAppMessageConfig.dismissButtonListener &&
-      typeof config.inAppMessageConfig.dismissButtonListener === "function"
-    ) {
-      this.onDismissButtonCallback =
-        config.inAppMessageConfig.dismissButtonListener;
-    }
-
-    if (
-      config.inAppMessageConfig.clipboardButtonListener &&
-      typeof config.inAppMessageConfig.clipboardButtonListener === "function"
-    ) {
-      this.onClipboardButtonCallback =
-        config.inAppMessageConfig.clipboardButtonListener;
+      this.inAppMessageListener = config.inAppMessageConfig.messageListener;
     }
   }
 
@@ -321,6 +339,44 @@ export class Swrve {
   ): ISwrveCampaign[] {
     const properties = this.retrievePersonalizationProperties(undefined, personalizationProperties);
     return this.campaignManager.getMessageCenterCampaigns(properties);
+  }
+
+  public getInAppMessageCenterCampaigns(
+    personalizationProperties?: IDictionary<string>
+  ): ISwrveCampaign[] {
+    const properties = this.retrievePersonalizationProperties(
+      undefined,
+      personalizationProperties
+    );
+    return this.campaignManager.getInAppMessageCenterCampaigns(properties);
+  }
+
+  public getMessageCenterCampaign(
+    campaignID: number,
+    personalizationProperties?: IDictionary<string>
+  ): ISwrveCampaign | null {
+    const properties = this.retrievePersonalizationProperties(
+      undefined,
+      personalizationProperties
+    );
+    const result = this.campaignManager.getMessageCenterCampaignResult(
+      campaignID,
+      properties
+    );
+
+    if (!result.campaign) {
+      const event = this.eventFactory.getCampaignTriggeredEvent(
+        "Swrve.Messages.MessageCenterCampaign",
+        { campaign_id: campaignID },
+        result.reason,
+        "false",
+        result.campaigns
+      );
+      const nextQASeqNum = this.profileManager.getNextSequenceNumber();
+      this.qaLogging.campaignTriggeredEvent(nextQASeqNum, event);
+    }
+
+    return result.campaign;
   }
 
   //************************************ EVENTS ********************************************************************/
@@ -476,6 +532,26 @@ export class Swrve {
 
   public enqueuePushEvents(events: IPushEvent[]): void {
     events.forEach((evt) => {
+      // Push "delivered" is sent as a generic_campaign_event (campaignType
+      // "push", actionType "delivered") to match iOS/Android. Other push
+      // events (e.g. engaged) remain named events, also matching native.
+      if (evt.event_type === SwrveConstants.SWRVE_PUSH_RECEIVED_EVENT_TYPE) {
+        const delivered = this.eventFactory.getGenericCampaignEvent(
+          this.profileManager.getNextSequenceNumber(),
+          "push",
+          "delivered",
+          this.resolvePushId(evt.event),
+          undefined,
+          evt.payload,
+          undefined,
+          evt.timestamp
+        );
+
+        this.queueEvent(delivered);
+        this.qaLogging.genericCampaignEvent(delivered);
+        return;
+      }
+
       const wrapped = this.eventFactory.getNamedEvent(
         evt.event,
         evt.payload,
@@ -488,10 +564,21 @@ export class Swrve {
     });
   }
 
+  private resolvePushId(eventName: string): string {
+    const match = /Push-(.+)\.delivered$/.exec(eventName);
+    return match ? match[1] : eventName;
+  }
+
   //******************************************** Embedded Campaigns ********************************************/
 
   public embeddedMessageWasShownToUser(message: ISwrveEmbeddedMessage): void {
     this.campaignManager.updateCampaignState(message);
+    this.queueMessageImpressionEvent(message, { embedded: "true" });
+  }
+
+  public embeddedControlMessageImpressionEvent(
+    message: ISwrveEmbeddedMessage
+  ): void {
     this.queueMessageImpressionEvent(message, { embedded: "true" });
   }
 
@@ -562,6 +649,35 @@ export class Swrve {
     return this.campaignManager.getEmbeddedMessageCenterCampaigns(properties);
   }
 
+  public pushInboxMessages(): ISwrvePushInboxMessage[] {
+    return this.pushInboxManager.filteredMessages();
+  }
+
+  public readPushInboxMessage(
+    messageId: SwrvePushInboxId,
+    listener?: OnPushInboxOperationComplete
+  ): Promise<ISwrvePushInboxResult> {
+    return this.pushInboxManager.readMessage(messageId, listener);
+  }
+
+  public deletePushInboxMessage(
+    messageId: SwrvePushInboxId,
+    listener?: OnPushInboxOperationComplete
+  ): Promise<ISwrvePushInboxResult> {
+    return this.pushInboxManager.deleteMessage(messageId, listener);
+  }
+
+  public engagePushInboxMessage(
+    messageId: SwrvePushInboxId,
+    listener?: OnPushInboxOperationComplete
+  ): Promise<ISwrvePushInboxResult> {
+    return this.pushInboxManager.engageMessage(messageId, listener);
+  }
+
+  public pushInboxUpdateListener(listener: OnPushInboxUpdated): void {
+    this.onPushInboxUpdatedCallback = listener;
+  }
+
   //******************************************** Lifecycle *********************************************************/
 
   public stop(): void {
@@ -620,6 +736,11 @@ export class Swrve {
           this.autoShowMessages();
         }
       });
+  }
+
+  public async refreshCampaignsAndResources(): Promise<void> {
+    this.profileManager.clearEtagHeader();
+    return this.updateCampaignsAndResources(true);
   }
 
   public getRealTimeUserProperties(): IDictionary<string> {
@@ -702,6 +823,11 @@ export class Swrve {
       payload = { embedded: "false" };
     }
 
+    payload = {
+      ...payload,
+      ...this.iamCommonPayload(),
+    };
+
     const evt = this.eventFactory.getImpressionEvent(
       message,
       nextSeqNum,
@@ -710,6 +836,102 @@ export class Swrve {
 
     this.queueEvent(evt);
     this.qaLogging.namedEvent(evt);
+
+    /* Embedded campaigns have their own embeddedCallback and must not fire the
+     * in-app message listener. */
+    if (payload.embedded !== "true") {
+      this.notifyInAppMessageListener(
+        SwrveMessageAction.Impression,
+        this.getMessageDetails(message)
+      );
+    }
+  }
+
+  private getMessageDetails(message: ISwrveBaseMessage): ISwrveMessageDetails {
+    return {
+      campaignId: message.parentCampaign,
+      variantId: message.id,
+      messageName: message.name,
+      campaignSubject: message.message_center_details
+        ? message.message_center_details.subject
+        : undefined,
+    };
+  }
+
+  private getButtonDetails(
+    button: ISwrveButton,
+    resolvedAction?: string,
+    resolvedText?: string
+  ): ISwrveMessageButtonDetails {
+    const authoredText = button.text ? String(button.text.value) : undefined;
+
+    return {
+      buttonName: button.name,
+      buttonText: resolvedText !== undefined ? resolvedText : authoredText,
+      actionType: String(button.type.value),
+      actionString:
+        resolvedAction !== undefined
+          ? resolvedAction
+          : String(button.action.value),
+    };
+  }
+
+  /**
+   * Resolves personalization in an authored button string. Campaigns whose
+   * button text or action cannot be resolved are filtered out before display
+   * (SwrveButton.canRender), so this falls back to the authored value rather
+   * than blocking the click.
+   */
+  private resolvePersonalization(
+    text: string,
+    personalizationProperties?: IDictionary<string>
+  ): string {
+    if (!text) {
+      return text;
+    }
+
+    try {
+      const resolved = TextTemplating.applyTextTemplatingToString(
+        text,
+        personalizationProperties
+      );
+      if (resolved !== null) {
+        return resolved;
+      }
+    } catch (e) {
+      SwrveLogger.warn("Could not resolve personalization for: " + text);
+    }
+
+    return text;
+  }
+
+  private notifyInAppMessageListener(
+    action: SwrveMessageAction,
+    messageDetails: ISwrveMessageDetails,
+    selectedButton?: ISwrveMessageButtonDetails
+  ): void {
+    if (!this.inAppMessageListener) {
+      return;
+    }
+
+    try {
+      this.inAppMessageListener(action, messageDetails, selectedButton);
+    } catch (error) {
+      SwrveLogger.error("Error in messageListener callback", error);
+    }
+  }
+
+  /**
+   * Common payload fields stamped on every IAM analytics event
+   * (impression, click, dismiss, navigation, page_view, video_*),
+   * mirroring iOS `iamCommonEventPayload` and Android's per-event
+   * platform/deviceType additions.
+   */
+  private iamCommonPayload(): { platform: string; deviceType: string } {
+    return {
+      platform: this.platform.name().variation,
+      deviceType: this.platform.deviceType,
+    };
   }
 
   public onResourcesLoaded(callback: OnResourcesLoadedCallback): void {
@@ -822,12 +1044,20 @@ export class Swrve {
     );
   }
 
-  public markMessageCenterCampaignAsSeen(campaign: ISwrveCampaign): void {
-    this.campaignManager.markCampaignAsSeen(campaign);
+  public markMessageCenterCampaignAsSeen(campaign: ISwrveCampaign | number): void {
+    if (typeof campaign === "number") {
+      this.campaignManager.markCampaignAsSeenById(campaign);
+    } else {
+      this.campaignManager.markCampaignAsSeen(campaign);
+    }
   }
 
-  public removeMessageCenterCampaign(campaign: ISwrveCampaign): void {
-    this.campaignManager.removeMessageCenterCampaign(campaign);
+  public removeMessageCenterCampaign(campaign: ISwrveCampaign | number): void {
+    if (typeof campaign === "number") {
+      this.campaignManager.removeMessageCenterCampaignById(campaign);
+    } else {
+      this.campaignManager.removeMessageCenterCampaign(campaign);
+    }
   }
 
   public shutdown(): void {
@@ -995,19 +1225,40 @@ export class Swrve {
 
   private handleButtonClicked(
     button: ISwrveButton,
-    message: ISwrveMessage
+    message: ISwrveMessage,
+    context?: IButtonClickContext
   ): void {
     const type = String(button.type.value);
     const action = String(button.action.value);
-
-    this.queueEvent(
-      this.eventFactory.getButtonClickEvent(
-        this.profileManager.getNextSequenceNumber(),
-        message,
-        button.name,
-        "false"
-      )
+    /* The action and text may carry personalization, so resolve both before
+       the action is opened or either is handed to the integrator - matching
+       iOS (SwrveMessageUIView) and Android (InAppMessageHandler), which pass
+       a resolved action and resolved text to their listeners. */
+    const personalizationProperties = context
+      ? context.personalizationProperties
+      : undefined;
+    const resolvedAction = this.resolvePersonalization(
+      action,
+      personalizationProperties
     );
+    const resolvedText = button.text
+      ? this.resolvePersonalization(
+          String(button.text.value),
+          personalizationProperties
+        )
+      : undefined;
+
+    const clickEvent = this.eventFactory.getButtonClickEvent(
+      this.profileManager.getNextSequenceNumber(),
+      message,
+      button.name,
+      "false",
+      context
+    );
+    const common = this.iamCommonPayload();
+    clickEvent.payload.platform = common.platform;
+    clickEvent.payload.deviceType = common.deviceType;
+    this.queueEvent(clickEvent);
 
     this.qaLogging.buttonClickEvent(
       message.parentCampaign!,
@@ -1018,17 +1269,158 @@ export class Swrve {
       this.profileManager.getNextSequenceNumber()
     );
 
-    if (type === SwrveConstants.DISMISS && this.onDismissButtonCallback) {
-      this.onDismissButtonCallback();
-    } else if (type === SwrveConstants.CUSTOM) {
-      if (action.match(/^https?:\/\//)) {
-        this.platform.openLink(action);
+    if (type === SwrveConstants.CUSTOM && resolvedAction.match(/^https?:\/\//)) {
+      this.platform.openLink(resolvedAction);
+    }
+
+    switch (type) {
+      case SwrveConstants.DISMISS:
+        this.notifyInAppMessageListener(
+          SwrveMessageAction.Dismiss,
+          this.getMessageDetails(message),
+          this.getButtonDetails(button, resolvedAction, resolvedText)
+        );
+        break;
+      case SwrveConstants.CUSTOM:
+        this.notifyInAppMessageListener(
+          SwrveMessageAction.Custom,
+          this.getMessageDetails(message),
+          this.getButtonDetails(button, resolvedAction, resolvedText)
+        );
+        break;
+      default:
+        break;
+    }
+  }
+
+  private handleGenericCampaignEvent(
+    event: Omit<IGenericCampaignEvent, "seqnum" | "time" | "type">
+  ): void {
+    // These are IAM events (page_view/navigation/dismiss/video_*); stamp the
+    // common platform/deviceType fields, matching iOS/Android. Push-inbox
+    // generic events are sent separately via PushInboxManager.
+    const payload = {
+      ...(event.payload || {}),
+      ...this.iamCommonPayload(),
+    };
+    const evt = this.eventFactory.getGenericCampaignEvent(
+      this.profileManager.getNextSequenceNumber(),
+      event.campaignType,
+      event.actionType,
+      event.id,
+      event.contextId,
+      payload,
+      event.mediaId
+    );
+    this.queueEvent(evt);
+    this.qaLogging.genericCampaignEvent(evt);
+  }
+
+  private handleDataCaptureEvent(event: ISwrveDataCaptureEvent): void {
+    this.queueDataCaptureEventsForButton(
+      event.events,
+      event.user_updates,
+      event.personalizationProperties
+    );
+  }
+
+  private queueDataCaptureEventsForButton(
+    events: ReadonlyArray<ISwrveButtonEvent>,
+    userUpdates: ReadonlyArray<ISwrveButtonPayloadItem>,
+    personalizationProperties?: IDictionary<string>
+  ): void {
+    this.queueButtonEvents(events || [], personalizationProperties);
+    this.queueButtonUserUpdates(userUpdates || [], personalizationProperties);
+  }
+
+  private queueButtonEvents(
+    events: ReadonlyArray<ISwrveButtonEvent>,
+    personalizationProperties?: IDictionary<string>
+  ): void {
+    events.forEach((buttonEvent) => {
+      const payload = this.resolveButtonPayload(
+        buttonEvent.payload || [],
+        personalizationProperties
+      ) as IDictionary<string | number>;
+
+      this.validateEventName(buttonEvent.name);
+      const evt = this.eventFactory.getNamedEvent(
+        buttonEvent.name,
+        payload,
+        this.profileManager.getNextSequenceNumber(),
+        DateHelper.nowInUtcTime()
+      );
+
+      this.queueEvent(evt);
+      this.qaLogging.namedEvent(evt);
+      this.checkTriggers(buttonEvent.name, payload);
+    });
+  }
+
+  private queueButtonUserUpdates(
+    userUpdates: ReadonlyArray<ISwrveButtonPayloadItem>,
+    personalizationProperties?: IDictionary<string>
+  ): void {
+    const attributes = this.resolveButtonPayload(
+      userUpdates,
+      personalizationProperties
+    );
+
+    if (Object.keys(attributes).length === 0) {
+      return;
+    }
+
+    const evt = this.eventFactory.getUserUpdate(
+      attributes,
+      this.profileManager.getNextSequenceNumber(),
+      DateHelper.nowInUtcTime()
+    );
+
+    this.queueEvent(evt);
+    this.qaLogging.userUpdate(evt);
+  }
+
+  private resolveButtonPayload(
+    payloadItems: ReadonlyArray<ISwrveButtonPayloadItem>,
+    personalizationProperties?: IDictionary<string>
+  ): IDictionary<string | number | boolean> {
+    const payload: IDictionary<string | number | boolean> = {};
+
+    payloadItems.forEach((item) => {
+      if (!item || !item.key) {
+        return;
       }
 
-      if (this.onCustomButtonClickedCallback) {
-        this.onCustomButtonClickedCallback(action);
+      const value = this.resolveButtonPayloadValue(
+        item.value,
+        personalizationProperties
+      );
+      if (value !== null) {
+        payload[item.key] = value;
       }
+    });
+
+    return payload;
+  }
+
+  private resolveButtonPayloadValue(
+    value: string | number | boolean,
+    personalizationProperties?: IDictionary<string>
+  ): string | number | boolean | null {
+    if (typeof value !== "string") {
+      return value;
     }
+
+    try {
+      return TextTemplating.applyTextTemplatingToString(
+        value,
+        personalizationProperties
+      );
+    } catch (e) {
+      SwrveLogger.debug("Could not resolve personalization for: " + value);
+    }
+
+    return null;
   }
 
   private autoShowMessages(): void {
@@ -1099,6 +1491,7 @@ export class Swrve {
       version: SWRVE_USER_CONTENT_API_VERSION,
       embedded_campaign_version: SWRVE_EMBEDDED_CAMPAIGN_VERSION,
       in_app_version: SWRVE_IN_APP_CAMPAIGN_VERSION,
+      push_inbox_version: SWRVE_PUSH_INBOX_VERSION,
       language: this.platform.language,
       app_store: this.platform.appStore,
       device_width: this.platform.screenWidth.toString(),
@@ -1108,7 +1501,7 @@ export class Swrve {
       device_type: this.platform.deviceType,
       os: this.platform.os,
       os_version: this.platform.osVersion,
-      orientation: "landscape",
+      orientation: "both",
     };
 
     return params;
@@ -1154,6 +1547,7 @@ export class Swrve {
     this.handleCampaigns(response.data);
     this.handleResources(response.data);
     this.handleWebPushApi(response.data);
+    this.handlePushInbox(response.data);
 
     if (response.etag != null) {
       this.profileManager.storeEtagHeader(response.etag);
@@ -1312,6 +1706,22 @@ export class Swrve {
         this.webPushApiKey,
         this.config.WebPushConfig.autoPushSubscribe
       );
+    }
+  }
+
+  private handlePushInbox(response: ISwrveCampaignResourceResponse): void {
+    if (response.push_inbox) {
+      this.pushInboxManager.updatePushInbox(response.push_inbox);
+    }
+
+    if (response.push_inbox_hash) {
+      const storedHash = this.pushInboxManager.getStoredHash();
+      const hashChanged = storedHash !== response.push_inbox_hash;
+      this.pushInboxManager.storeHash(response.push_inbox_hash);
+
+      if (hashChanged && this.onPushInboxUpdatedCallback) {
+        this.onPushInboxUpdatedCallback();
+      }
     }
   }
 

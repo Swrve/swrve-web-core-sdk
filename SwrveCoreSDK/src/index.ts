@@ -18,6 +18,12 @@ import {
   OnPersonalizationProvider,
   OnWebPushAPIKeyListener,
 } from "./interfaces/ISwrveConfig";
+import {
+  ISwrveMessageButtonDetails,
+  ISwrveMessageDetails,
+  OnSwrveInAppMessageListener,
+  SwrveMessageAction,
+} from "./interfaces/ISwrveMessageListener";
 import { ResourceManager } from "./Resources/ResourceManager";
 import {
   ISwrveCampaign,
@@ -31,6 +37,16 @@ import IDictionary from "./interfaces/IDictionary";
 import IReadonlyDictionary from "./interfaces/IReadonlyDictionary";
 import IReward from "./interfaces/IReward";
 import IPushEvent from "./interfaces/IPushEvent";
+import {
+  ISwrvePushInboxMessage,
+  ISwrvePushInboxMessageRaw,
+  ISwrvePushInboxResult,
+  OnPushInboxOperationComplete,
+  OnPushInboxUpdated,
+  SwrvePushInboxId,
+  SwrvePushInboxMessageState,
+  SwrvePushInboxResultCode,
+} from "./interfaces/IPushInbox";
 import { IAsset } from "./interfaces/IAsset";
 import { IKeyMapping } from "./interfaces/IKeymapping";
 import { generateUuid } from "./utils/uuid";
@@ -63,6 +79,14 @@ export {
   ISwrveAsset,
   IReward,
   IPushEvent,
+  ISwrvePushInboxMessage,
+  ISwrvePushInboxMessageRaw,
+  ISwrvePushInboxResult,
+  OnPushInboxOperationComplete,
+  OnPushInboxUpdated,
+  SwrvePushInboxId,
+  SwrvePushInboxMessageState,
+  SwrvePushInboxResultCode,
   IAsset,
   IKeyMapping,
   DevicePropertyName,
@@ -70,6 +94,10 @@ export {
   OnPersonalizationProvider,
   OnEmbeddedMessageListener,
   OnWebPushAPIKeyListener,
+  OnSwrveInAppMessageListener,
+  SwrveMessageAction,
+  ISwrveMessageDetails,
+  ISwrveMessageButtonDetails,
   SwrveFocusManager,
   MenuDirection,
   NETWORK_CONNECTED,

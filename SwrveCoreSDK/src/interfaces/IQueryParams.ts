@@ -4,6 +4,7 @@ export interface IQueryParams {
   app_version?: string;
   embedded_campaign_version: string;
   in_app_version: string;
+  push_inbox_version?: string;
   joined: string;
   version: string;
   language: string;

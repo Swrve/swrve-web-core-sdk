@@ -1,6 +1,7 @@
 import HttpError from "./HttpError";
 import IHttpResponse from "../interfaces/IHttpResponse";
 import IRestClient from "../interfaces/IRestClient";
+import { parseJsonPreservingLargeIds } from "./JsonParser";
 
 export class SwrveRestClient implements IRestClient {
 
@@ -22,13 +23,27 @@ export class SwrveRestClient implements IRestClient {
     return await this.http<U>(new Request(path, init));
   }
 
+  public async postForm<U>(path: string, body: string, config?: RequestInit): Promise<IHttpResponse<U>> {
+    const init: RequestInit = {
+      method: "POST",
+      body,
+      cache: "no-cache",
+      headers: new Headers([["Content-Type", "application/x-www-form-urlencoded"]]),
+      ...config
+    };
+
+    return await this.http<U>(new Request(path, init));
+  }
+
   private async http<T>(request: Request): Promise<IHttpResponse<T>> {
     const response = await fetch(request);
     if (!response.ok) throw new HttpError(response.status, response.statusText);
 
     return {
       etag: response.headers.get("etag"),
-      data: await response.json().catch(() => {{}})
+      data: await response.text()
+        .then((text) => text ? parseJsonPreservingLargeIds(text) : {})
+        .catch(() => ({}))
     } as IHttpResponse<T>;
   }
 }

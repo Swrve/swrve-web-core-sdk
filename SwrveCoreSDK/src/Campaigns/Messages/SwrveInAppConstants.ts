@@ -7,6 +7,8 @@ export const SWRVE_IAM_CANVAS = "swrveIAM__canvas";
 export const SWRVE_IAM_BUTTON = "swrveIAM__button";
 export const SWRVE_IAM_IMAGE = "swrveIAM__image";
 export const SWRVE_IAM_BUTTON_CLICK_EVENT = "swrve-iam-button-click";
+export const SWRVE_IAM_GENERIC_CAMPAIGN_EVENT = "swrve-iam-generic-campaign-event";
+export const SWRVE_IAM_DATA_CAPTURE_EVENT = "swrve-iam-data-capture-event";
 export const enum Animation {
   none = "none",
   fadeInDown = "fadeInDown",
@@ -28,9 +30,6 @@ export const enum Position {
 export const DEFAULT_IAM_TEXT_BACKGROUND_COLOR = 'transparent';
 export const DEFAULT_IAM_TEXT_FOREGROUND_COLOR = '#000000';
 export const DEFAULT_IAM_TEXT_FONT = 'Arial';
-const DEFAULT_HOVER_STYLE = {
-  opacity: "60%",
-};
 export const SWRVE_IAM_DEFAULT_ENTER_ANIMATION = "fadeInDown"; //TODO: should be none
 export const SWRVE_IAM_DEFAULT_POSITION = "center";
 export const SWRVE_IAM_POSITIONS = {
@@ -235,6 +234,11 @@ export const SWRVE_IAM_TEMPLATE_LITERAL = `
 
     .${SWRVE_IAM_CANVAS} {
       position: relative;
+      /* The overlay centres the canvas with flexbox. Without this, on viewports
+         narrower than the canvas design width (i.e. mobile) flexbox shrinks the
+         canvas's layout width before transform:scale() is applied, squishing it
+         narrow-and-tall. flex-shrink:0 keeps the design size so scale fits it. */
+      flex-shrink: 0;
     }
 
     @keyframes fadeIn {
@@ -269,18 +273,28 @@ export const SWRVE_IAM_BUTTON_TEMPLATE_LITERAL = `
         cursor: pointer;
         outline: inherit;
         position: absolute;
+        transition: transform 150ms ease-out;
       }
 
       button:focus {
         box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 50%);
       }
 
-      button:hover {
-        opacity: 60%;
+      /* The ring above is a keyboard and remote navigation affordance. A mouse
+         click or tap also focuses the button, which drew the ring on click. This
+         removes it for pointer focus only. It is written as a reset of the rule
+         above rather than moving the ring to :focus-visible so that engines
+         without :focus-visible support, such as older TV browsers, simply drop
+         this rule and keep showing the ring for all focus. */
+      button:focus:not(:focus-visible) {
+        box-shadow: none;
+      }
+
+      button:hover,
+      button:focus {
+        transform: scale(1.05);
       }
     </style>
 
     <button class="${SWRVE_IAM_BUTTON}" role="button"></button>
 `;
-
-  

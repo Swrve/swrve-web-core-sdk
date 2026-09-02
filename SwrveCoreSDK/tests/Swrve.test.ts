@@ -47,6 +47,14 @@ const inAppMessageMC: ISwrveCampaignResourceResponse = _inAppMessageMC as any;
 inAppMessageMC.campaigns.campaigns[0].start_date = Date.now() - twoDays;
 inAppMessageMC.campaigns.campaigns[0].end_date = Date.now() + twoDays;
 
+import _personalizedIAMMC = require("./resources/json/CampaignManagerTests-messageCenterPersonalized.json");
+const personalizedIAMMC: ISwrveCampaignResourceResponse = _personalizedIAMMC as any;
+personalizedIAMMC.campaigns.campaigns[0].start_date = Date.now() - twoDays;
+personalizedIAMMC.campaigns.campaigns[0].end_date = Date.now() + twoDays;
+personalizedIAMMC.campaigns.campaigns[1].start_date = Date.now() - twoDays;
+personalizedIAMMC.campaigns.campaigns[1].end_date = Date.now() + twoDays;
+personalizedIAMMC.campaigns.campaigns[2].start_date = Date.now() - twoDays;
+personalizedIAMMC.campaigns.campaigns[2].end_date = Date.now() + twoDays;
 
 import _embeddedMessageMC = require("./resources/json/SwrveSDKTests-embeddedMessageCenter.json");
 const embeddedMessageMC: ISwrveCampaignResourceResponse =
@@ -68,6 +76,11 @@ import { SWRVE_USER_ID } from "../src/utils/SwrveConstants";
 import IDictionary from "../src/interfaces/IDictionary";
 import DateHelper from "../src/utils/DateHelper";
 import HTMLSwrveInAppElement from "../src/Campaigns/Messages/HTMLSwrveInAppElement";
+import {
+  ISwrveMessageButtonDetails,
+  ISwrveMessageDetails,
+  SwrveMessageAction,
+} from "../src/interfaces/ISwrveMessageListener";
 
 const pal = new PlatformMock();
 
@@ -166,20 +179,30 @@ describe("SWRVE SDK TESTS", () => {
 
   it("generate first Use timestamp ", () => {
     const date = new Date("2019-04-07T10:20:30Z");
-    DateHelper.nowInUtcTime = jest.fn().mockReturnValue(date.getTime());
+    /* Pin the clock with a spy rather than assigning over DateHelper.nowInUtcTime:
+       a direct assignment cannot be restored, so it leaked into every later test
+       in this file and silently broke anything that depends on the current time
+       (e.g. campaign active-window checks). */
+    const nowSpy = jest
+      .spyOn(DateHelper, "nowInUtcTime")
+      .mockReturnValue(date.getTime());
 
-    restClient.changeResponse({ json: () => passes });
-    pal.synchronousStorage!.clear();
+    try {
+      restClient.changeResponse({ json: () => passes });
+      pal.synchronousStorage!.clear();
 
-    const sdk = new Swrve(
-      { appId: 30512, apiKey: "1234" },
-      { restClient, platform: pal }
-    );
-    sdk.init();
+      const sdk = new Swrve(
+        { appId: 30512, apiKey: "1234" },
+        { restClient, platform: pal }
+      );
+      sdk.init();
 
-    const profileManager = sdk["profileManager"];
-    expect(profileManager.currentUser.firstUse).not.toBe(0);
-    expect(profileManager.currentUser.firstUse).toBe(date.getTime());
+      const profileManager = sdk["profileManager"];
+      expect(profileManager.currentUser.firstUse).not.toBe(0);
+      expect(profileManager.currentUser.firstUse).toBe(date.getTime());
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 
   it("queue named Event - success", (done) => {
@@ -237,6 +260,79 @@ describe("SWRVE SDK TESTS", () => {
     done();
     
     restClient.changeResponse({ status: 200 });
+  });
+
+  it("queues generic campaign events", () => {
+    const restClient = new MockSwrveRestClient();
+    const sdk = new Swrve(
+      { appId: 30512, apiKey: "1234" },
+      { restClient, platform: pal }
+    );
+
+    sdk["handleGenericCampaignEvent"]({
+      campaignType: "iam",
+      actionType: "navigation",
+      id: 740417,
+      contextId: 1,
+      payload: {
+        pageName: "first",
+        to: 2,
+        buttonId: 1,
+        buttonName: "Next",
+      },
+    });
+
+    const eventQueue = sdk.getQueuedEvents();
+    const genericCampaignEvents = eventQueue.filter(
+      (evt: any) => evt.type === "generic_campaign_event"
+    );
+    expect(genericCampaignEvents.length).toBe(1);
+    expect((genericCampaignEvents[0] as any).campaignType).toBe("iam");
+    expect((genericCampaignEvents[0] as any).actionType).toBe("navigation");
+    expect((genericCampaignEvents[0] as any).id).toBe(740417);
+    expect((genericCampaignEvents[0] as any).contextId).toBe(1);
+    expect((genericCampaignEvents[0] as any).payload.pageName).toBe("first");
+    expect((genericCampaignEvents[0] as any).payload.to).toBe(2);
+
+    sdk.shutdown();
+  });
+
+  it("queues button data capture events and user updates", () => {
+    const restClient = new MockSwrveRestClient();
+    const sdk = new Swrve(
+      { appId: 30512, apiKey: "1234" },
+      { restClient, platform: pal }
+    );
+
+    sdk["handleDataCaptureEvent"]({
+      events: [
+        {
+          name: "bw.test",
+          payload: [
+            { key: "prop 1", value: "value is ${user.name}" },
+          ],
+        },
+      ],
+      user_updates: [
+        { key: "user.update", value: "update is ${user.name}" },
+      ],
+      personalizationProperties: {
+        "user.name": "Kevin",
+      },
+    });
+
+    const eventQueue = sdk.getQueuedEvents();
+    const namedEvents = eventQueue.filter(
+      (evt: any) => evt.type === "event" && evt.name === "bw.test"
+    );
+    expect(namedEvents.length).toBe(1);
+    expect((namedEvents[0] as any).payload["prop 1"]).toBe("value is Kevin");
+
+    const userUpdates = eventQueue.filter((evt: any) => evt.type === "user");
+    expect(userUpdates.length).toBe(1);
+    expect((userUpdates[0] as any).attributes["user.update"]).toBe("update is Kevin");
+
+    sdk.shutdown();
   });
 
   it("queue named Event - fail", (done) => {
@@ -310,11 +406,11 @@ describe("SWRVE SDK TESTS", () => {
       expect(contentParams.os_version).toBe(pal.osVersion);
       expect(contentParams.os).toBe(pal.os);
       expect(contentParams.device_type).toBe(pal.deviceType);
-      expect(contentParams.orientation).toBe("landscape");
+      expect(contentParams.orientation).toBe("both");
 
       // version numbers for Swrve backend items
-      expect(contentParams.version).toBe("8");
-      expect(contentParams.embedded_campaign_version).toBe("1");
+      expect(contentParams.version).toBe("10");
+      expect(contentParams.embedded_campaign_version).toBe("3");
 
       done();
     }, 1000);
@@ -787,18 +883,26 @@ describe("SWRVE SDK TESTS", () => {
       const eventQueue = sdk.getQueuedEvents();
       const qaQueue = sdk.getQALogging().getQueue();
 
+      // Delivered is sent as a generic_campaign_event (parity with iOS/Android),
+      // not a named event.
       const deliveredEvents = eventQueue.filter(
-        (evt) =>
-          evt.type === "event" && evt.name === "Swrve.Messages.Push-1.delivered"
+        (evt: any) =>
+          evt.type === "generic_campaign_event" &&
+          evt.campaignType === "push" &&
+          evt.actionType === "delivered" &&
+          String(evt.id) === "1"
       );
       expect(deliveredEvents.length).toBe(1);
+      // The receipt timestamp is preserved on the delivered event.
+      expect((deliveredEvents[0] as any).time).toBe(1701873418769);
 
       const deliveredQAEvents = qaQueue.filter(
-        (evt) =>
+        (evt: any) =>
           evt.type === "qa_log_event" &&
-          JSON.stringify(evt.log_details).indexOf(
-            "Swrve.Messages.Push-1.delivered"
-          ) !== -1
+          evt.log_details &&
+          evt.log_details.type === "generic_campaign_event" &&
+          evt.log_details.parameters &&
+          evt.log_details.parameters.actionType === "delivered"
       );
       expect(deliveredQAEvents.length).toBe(1);
 
@@ -916,14 +1020,24 @@ describe("SWRVE SDK TESTS", () => {
       const eventQueue = sdk.getQueuedEvents();
       const qaQueue = sdk.getQALogging().getQueue();
 
-      expect(eventQueue.length).toBe(2);
-      expect(qaQueue.length).toBe(4);
+      expect(eventQueue.length).toBe(3);
+      expect(qaQueue.length).toBe(5);
 
       const deliveredEvents = eventQueue.filter(
         (evt) =>
           evt.type === "event" && evt.name === "Swrve.Messages.Message-317655.impression"
       );
       expect(deliveredEvents.length).toBe(1);
+
+      const pageViewEvents = eventQueue.filter(
+        (evt: any) =>
+          evt.type === "generic_campaign_event" &&
+          evt.campaignType === "iam" &&
+          evt.actionType === "page_view" &&
+          evt.id === 317655 &&
+          evt.contextId === 0
+      );
+      expect(pageViewEvents.length).toBe(1);
 
       const deliveredQAEvents = qaQueue.filter(
         (evt) =>
@@ -936,6 +1050,51 @@ describe("SWRVE SDK TESTS", () => {
       expect(deliveredQAEvents.length).toBe(1);
 
       done();
+    }, 1000);
+  });
+
+  it("Queues a QA log when a message center campaign by id is not returned", (done) => {
+    const response = JSON.parse(JSON.stringify(personalizedIAMMC));
+    response.campaigns.campaigns.forEach((campaign: any) => {
+      campaign.start_date = DateHelper.nowInUtcTime() - twoDays;
+      campaign.end_date = DateHelper.nowInUtcTime() + twoDays;
+    });
+    restClient.changeResponse({ json: () => response });
+
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+      try {
+        const campaign = sdk.getMessageCenterCampaign(315425, {});
+        expect(campaign).toBeNull();
+
+        const qaQueue = sdk.getQALogging().getQueue();
+        const messageCenterQAEvents = qaQueue.filter(
+          (evt: any) =>
+            evt.log_type === "campaign-triggered" &&
+            evt.log_details.event_name === "Swrve.Messages.MessageCenterCampaign"
+        );
+
+        expect(messageCenterQAEvents).toHaveLength(1);
+        const qaEvent = messageCenterQAEvents[0] as any;
+        expect(qaEvent.log_details.displayed).toBe("false");
+        expect(qaEvent.log_details.reason).toBe(
+          "Campaign 315425 has unresolved personalization properties."
+        );
+        expect(qaEvent.log_details.campaigns[0].id).toBe(315425);
+
+        done();
+      } catch (error) {
+        done(error);
+      }
     }, 1000);
   });
 
@@ -1184,5 +1343,512 @@ describe("SWRVE SDK TESTS", () => {
 
       done();
     }, 500);
+  });
+
+  it("IAM impression event includes platform and deviceType (iOS/Android parity)", () => {
+    const sdk = new Swrve(
+      { appId: 30512, apiKey: "1234" },
+      { restClient, platform: pal }
+    );
+
+    sdk.queueMessageImpressionEvent({ id: 987654 } as any);
+
+    const impression = sdk
+      .getQueuedEvents()
+      .find(
+        (evt: any) =>
+          evt.type === "event" &&
+          evt.name === "Swrve.Messages.Message-987654.impression"
+      ) as any;
+
+    expect(impression).toBeDefined();
+    expect(impression.payload.embedded).toBe("false");
+    expect(impression.payload.platform).toBe("Base");
+    expect(impression.payload.deviceType).toBe("TEST-DEVICE-TYPE");
+  });
+
+  it("messageListener receives Impression with no selected button on trigger", (done) => {
+    restClient.changeResponse({ json: () => passes });
+
+    const messageListener = jest.fn();
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    const cm = sdk["campaignManager"];
+    jest.spyOn(cm as any, "applyGlobalRules").mockImplementation(() => ({
+      status: CAMPAIGN_MATCH,
+      message: "Campaign 315415 passes display rules",
+    }));
+    jest.spyOn(cm as any, "applyCampaignRules").mockImplementation(() => ({
+      status: CAMPAIGN_MATCH,
+      message: "Campaign 315415 passes display rules",
+    }));
+
+    sdk.init();
+
+    setTimeout(() => {
+      sdk.event("tv.event_simple", {});
+
+      const impressions = messageListener.mock.calls.filter(
+        (call) => call[0] === SwrveMessageAction.Impression
+      );
+      expect(impressions.length).toBe(1);
+
+      const details = impressions[0][1] as ISwrveMessageDetails;
+      expect(details.variantId).toBe(317653);
+      expect(details.messageName).toBe("Rachel Trigger Test");
+      expect(details.campaignId).toBe(315415);
+      expect(impressions[0][2]).toBeUndefined();
+
+      done();
+    }, 1000);
+  });
+
+  it("messageListener receives Impression from showMessageCenterCampaign", (done) => {
+    restClient.changeResponse({ json: () => inAppMessageMC });
+
+    const messageListener = jest.fn();
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+      const mc = sdk.getMessageCenterCampaigns();
+      expect(mc.length).toBe(1);
+
+      sdk.showMessageCenterCampaign(mc[0]);
+
+      const impressions = messageListener.mock.calls.filter(
+        (call) => call[0] === SwrveMessageAction.Impression
+      );
+      expect(impressions.length).toBe(1);
+
+      const details = impressions[0][1] as ISwrveMessageDetails;
+      expect(details.variantId).toBe(317655);
+      expect(details.messageName).toBe("Message Center Test");
+      expect(details.campaignId).toBe(315425);
+      expect(impressions[0][2]).toBeUndefined();
+
+      done();
+    }, 1000);
+  });
+
+  it("messageListener is not invoked for embedded campaign impressions", (done) => {
+    restClient.changeResponse({ json: () => embeddedMessageTriggered });
+
+    const embeddedCallback = jest.fn();
+    const messageListener = jest.fn();
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        embeddedMessageConfig: { embeddedCallback } as ISwrveEmbeddedMessageConfig,
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    const cm = sdk["campaignManager"];
+    jest.spyOn(cm as any, "applyGlobalRules").mockImplementation(() => ({
+      status: CAMPAIGN_MATCH,
+      message: "Campaign 315415 passes display rules",
+    }));
+    jest.spyOn(cm as any, "applyCampaignRules").mockImplementation(() => ({
+      status: CAMPAIGN_MATCH,
+      message: "Campaign 315415 passes display rules",
+    }));
+
+    sdk.init();
+
+    setTimeout(() => {
+      sdk.event("embedded.trigger", {});
+      expect(embeddedCallback.mock.calls.length).toBe(1);
+
+      const embeddedMessage = embeddedCallback.mock
+        .calls[0][0] as ISwrveEmbeddedMessage;
+      sdk.embeddedMessageWasShownToUser(embeddedMessage);
+      sdk.embeddedControlMessageImpressionEvent(embeddedMessage);
+
+      const impression = sdk
+        .getQueuedEvents()
+        .find(
+          (evt: any) =>
+            evt.type === "event" &&
+            evt.name === "Swrve.Messages.Message-527804.impression"
+        ) as any;
+      expect(impression).toBeDefined();
+      expect(impression.payload.embedded).toBe("true");
+
+      expect(messageListener).not.toHaveBeenCalled();
+
+      done();
+    }, 1000);
+  });
+
+  it("a throwing messageListener does not break impression event queueing", (done) => {
+    restClient.changeResponse({ json: () => inAppMessageMC });
+
+    const messageListener = jest.fn(() => {
+      throw new Error("integrator callback blew up");
+    });
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+      const mc = sdk.getMessageCenterCampaigns();
+
+      expect(() => sdk.showMessageCenterCampaign(mc[0])).not.toThrow();
+      expect(messageListener).toHaveBeenCalled();
+
+      const impression = sdk
+        .getQueuedEvents()
+        .find(
+          (evt: any) =>
+            evt.type === "event" &&
+            evt.name === "Swrve.Messages.Message-317655.impression"
+        ) as any;
+      expect(impression).toBeDefined();
+
+      done();
+    }, 1000);
+  });
+
+  it("messageListener receives Custom with the selected button on custom button click", (done) => {
+    restClient.changeResponse({ json: () => noQAUser });
+
+    const messageListener = jest.fn();
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+      const campaign = sdk
+        .getMessageCenterCampaigns()
+        .find((c) => c.id === 298948)!;
+      expect(campaign).toBeDefined();
+
+      sdk.showMessageCenterCampaign(campaign);
+
+      const iamItems = document.getElementsByTagName("swrve-in-app-message");
+      const iamItem = iamItems[iamItems.length - 1] as HTMLSwrveInAppElement;
+      /* The shadow root is attached in "closed" mode, so element.shadowRoot is
+       * always null — reach the rendered buttons via the internal canvas. */
+      const customButton = (iamItem as any)._canvasElement.querySelector(
+        "#swrveIAM__button-1"
+      ) as HTMLElement;
+      customButton.click();
+
+      const customCalls = messageListener.mock.calls.filter(
+        (call) => call[0] === SwrveMessageAction.Custom
+      );
+      expect(customCalls.length).toBe(1);
+
+      const details = customCalls[0][1] as ISwrveMessageDetails;
+      expect(details.variantId).toBe(301432);
+      expect(details.messageName).toBe("OTT_DEMO");
+      expect(details.campaignId).toBe(298948);
+
+      const selectedButton = customCalls[0][2] as ISwrveMessageButtonDetails;
+      expect(selectedButton.buttonName).toBe("Button One");
+      expect(selectedButton.actionType).toBe("CUSTOM");
+      expect(selectedButton.actionString).toBe("https://www.google.com");
+
+      done();
+    }, 1000);
+  });
+
+  it("resolves personalization in a custom action before opening it", (done) => {
+    /* Button One's action carries personalization; the campaign is only
+       served because "user.id" resolves. */
+    const personalizedActions = JSON.parse(JSON.stringify(noQAUser));
+    const campaignJson = personalizedActions.campaigns.campaigns.find(
+      (c: any) => c.id === 298948
+    );
+    const buttons = campaignJson.message.template.formats[0].buttons;
+    buttons[1].action.value = "https://shop.example.com/user/${user.id}/cart";
+
+    restClient.changeResponse({ json: () => personalizedActions });
+
+    const openLink = jest.spyOn(pal, "openLink");
+    const messageListener = jest.fn();
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        personalizationProvider: () => ({ "user.id": "12345" }),
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+      const campaign = sdk
+        .getMessageCenterCampaigns()
+        .find((c) => c.id === 298948)!;
+      expect(campaign).toBeDefined();
+
+      const qaSpy = jest.spyOn(sdk.getQALogging(), "buttonClickEvent");
+
+      sdk.showMessageCenterCampaign(campaign);
+
+      const iamItems = document.getElementsByTagName("swrve-in-app-message");
+      const iamItem = iamItems[iamItems.length - 1] as HTMLSwrveInAppElement;
+      const customButton = (iamItem as any)._canvasElement.querySelector(
+        "#swrveIAM__button-1"
+      ) as HTMLElement;
+      customButton.click();
+
+      expect(openLink).toHaveBeenCalledWith(
+        "https://shop.example.com/user/12345/cart"
+      );
+
+      const customCalls = messageListener.mock.calls.filter(
+        (call) => call[0] === SwrveMessageAction.Custom
+      );
+      expect(customCalls.length).toBe(1);
+      const selectedButton = customCalls[0][2] as ISwrveMessageButtonDetails;
+      expect(selectedButton.actionString).toBe(
+        "https://shop.example.com/user/12345/cart"
+      );
+
+      /* QA logging keeps the authored action, matching Android */
+      expect(qaSpy).toHaveBeenCalledWith(
+        298948,
+        301432,
+        "Button One",
+        "CUSTOM",
+        "https://shop.example.com/user/${user.id}/cart",
+        expect.any(Number)
+      );
+
+      openLink.mockRestore();
+      qaSpy.mockRestore();
+      sdk.shutdown();
+      done();
+    }, 1000);
+  });
+
+  it("resolves personalization in the button text given to the listener", (done) => {
+    /* iOS (SwrveMessageUIView displayString) and Android (resolvedText) both
+       hand the listener the button text as it was displayed, so Web does too. */
+    const personalizedText = JSON.parse(JSON.stringify(noQAUser));
+    const campaignJson = personalizedText.campaigns.campaigns.find(
+      (c: any) => c.id === 298948
+    );
+    const buttons = campaignJson.message.template.formats[0].buttons;
+    buttons[1].text = { type: "text", value: "Upgrade, ${user.name}" };
+
+    /* jsdom has no 2D canvas context and the text button path measures text to
+     * fit its font size, so stub it for this render only. */
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue({
+      font: "",
+      measureText: () => ({
+        width: 50,
+        actualBoundingBoxAscent: 10,
+        actualBoundingBoxDescent: 2,
+      }),
+    }) as any;
+
+    restClient.changeResponse({ json: () => personalizedText });
+
+    const messageListener = jest.fn();
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        personalizationProvider: () => ({ "user.name": "Kevin" }),
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+      const campaign = sdk
+        .getMessageCenterCampaigns()
+        .find((c) => c.id === 298948)!;
+      expect(campaign).toBeDefined();
+
+      sdk.showMessageCenterCampaign(campaign);
+
+      const iamItems = document.getElementsByTagName("swrve-in-app-message");
+      const iamItem = iamItems[iamItems.length - 1] as HTMLSwrveInAppElement;
+      const customButton = (iamItem as any)._canvasElement.querySelector(
+        "#swrveIAM__button-1"
+      ) as HTMLElement;
+      customButton.click();
+
+      HTMLCanvasElement.prototype.getContext = originalGetContext;
+
+      const customCalls = messageListener.mock.calls.filter(
+        (call) => call[0] === SwrveMessageAction.Custom
+      );
+      expect(customCalls.length).toBe(1);
+      const selectedButton = customCalls[0][2] as ISwrveMessageButtonDetails;
+      expect(selectedButton.buttonText).toBe("Upgrade, Kevin");
+
+      sdk.shutdown();
+      done();
+    }, 1000);
+  });
+
+  it("resolves personalization in a custom scheme action without opening it", (done) => {
+    const personalizedActions = JSON.parse(JSON.stringify(noQAUser));
+    const campaignJson = personalizedActions.campaigns.campaigns.find(
+      (c: any) => c.id === 298948
+    );
+    const buttons = campaignJson.message.template.formats[0].buttons;
+    buttons[2].action.value = "SwrveDevApp://settings/${user.id}";
+
+    restClient.changeResponse({ json: () => personalizedActions });
+
+    const openLink = jest.spyOn(pal, "openLink");
+    const messageListener = jest.fn();
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        personalizationProvider: () => ({ "user.id": "12345" }),
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+      const campaign = sdk
+        .getMessageCenterCampaigns()
+        .find((c) => c.id === 298948)!;
+      sdk.showMessageCenterCampaign(campaign);
+
+      const iamItems = document.getElementsByTagName("swrve-in-app-message");
+      const iamItem = iamItems[iamItems.length - 1] as HTMLSwrveInAppElement;
+      const customButton = (iamItem as any)._canvasElement.querySelector(
+        "#swrveIAM__button-2"
+      ) as HTMLElement;
+      customButton.click();
+
+      expect(openLink).not.toHaveBeenCalled();
+
+      const customCalls = messageListener.mock.calls.filter(
+        (call) => call[0] === SwrveMessageAction.Custom
+      );
+      expect(customCalls.length).toBe(1);
+      const selectedButton = customCalls[0][2] as ISwrveMessageButtonDetails;
+      expect(selectedButton.actionString).toBe(
+        "SwrveDevApp://settings/12345"
+      );
+
+      openLink.mockRestore();
+      sdk.shutdown();
+      done();
+    }, 1000);
+  });
+
+  it("messageListener receives Dismiss with the selected button on dismiss button click", (done) => {
+    restClient.changeResponse({ json: () => noQAUser });
+
+    const messageListener = jest.fn();
+    const sdk = new Swrve(
+      {
+        appId: 30512,
+        apiKey: "1234",
+        inAppMessageConfig: {
+          autoShowMessagesMaxDelay: 5000,
+          messageListener,
+        },
+      },
+      { restClient, platform: pal }
+    );
+
+    sdk.init();
+
+    setTimeout(() => {
+      const campaign = sdk
+        .getMessageCenterCampaigns()
+        .find((c) => c.id === 298948)!;
+      sdk.showMessageCenterCampaign(campaign);
+
+      const iamItems = document.getElementsByTagName("swrve-in-app-message");
+      const iamItem = iamItems[iamItems.length - 1] as HTMLSwrveInAppElement;
+      const dismissButton = (iamItem as any)._canvasElement.querySelector(
+        "#swrveIAM__button-0"
+      ) as HTMLElement;
+      dismissButton.click();
+
+      const dismissCalls = messageListener.mock.calls.filter(
+        (call) => call[0] === SwrveMessageAction.Dismiss
+      );
+      expect(dismissCalls.length).toBe(1);
+
+      const details = dismissCalls[0][1] as ISwrveMessageDetails;
+      expect(details.variantId).toBe(301432);
+      expect(details.messageName).toBe("OTT_DEMO");
+      expect(details.campaignId).toBe(298948);
+
+      const selectedButton = dismissCalls[0][2] as ISwrveMessageButtonDetails;
+      expect(selectedButton.buttonName).toBe("Background");
+      expect(selectedButton.actionType).toBe("DISMISS");
+      expect(selectedButton.actionString).toBe("");
+
+      done();
+    }, 1000);
   });
 });

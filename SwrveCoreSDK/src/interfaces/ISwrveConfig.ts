@@ -1,14 +1,12 @@
 import IDictionary from "./IDictionary";
 import { ISwrveEmbeddedMessage, ISwrveMessage } from "./ISwrveCampaign";
+import { OnSwrveInAppMessageListener } from "./ISwrveMessageListener";
 
 export type Stack = 'us'|'eu';
 
-export declare type OnEmbeddedMessageListener = (msg: ISwrveEmbeddedMessage, personalizationProperties?: IDictionary<string>) => void;
+export declare type OnEmbeddedMessageListener = (msg: ISwrveEmbeddedMessage, personalizationProperties?: IDictionary<string>, isControl?: boolean) => void;
 export declare type OnPersonalizationProvider = (eventPayload: IDictionary<string>) => IDictionary<string> ;
 export declare type OnWebPushAPIKeyListener = (key: string, autoSubscribe: boolean) => void;
-export declare type OnDismissButtonListener = () => void;
-export declare type OnCustomButtonListener = (customString: string) => void;
-export declare type OnClipboardButtonListener = (clipboardContents: string) => void;
 export declare type OnMessageListener = (msg: ISwrveMessage) => void;
 
 export interface ICSSStyle {
@@ -19,12 +17,10 @@ export interface ISwrveInAppMessageConfig {
   autoShowMessagesMaxDelay: number;
   defaultBackgroundColor?: string;
   defaultButtonFocusStyle?: ICSSStyle | string;
-  defaultTextForegroundColor?: string;
-  defaultTextBackgroundColor?: string;
-  defaultTextFontStyle?: string;
-  customButtonListener?: OnCustomButtonListener;
-  clipboardButtonListener?: OnClipboardButtonListener;
-  dismissButtonListener?: OnDismissButtonListener;
+  personalizedTextForegroundColor?: string;
+  personalizedTextBackgroundColor?: string;
+  personalizedTextFontStyle?: string;
+  messageListener?: OnSwrveInAppMessageListener;
 }
 
 export interface ISwrveEmbeddedMessageConfig {

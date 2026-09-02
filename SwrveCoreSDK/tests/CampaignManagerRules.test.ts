@@ -27,8 +27,10 @@ import { ProfileManager } from "../src/Profile/ProfileManager";
 import SwrveEvent from "./WebApi/Events/SwrveEvent";
 import { MockSwrveRestClient } from "./mocks/MockSwrveRestClient";
 import PlatformMock from "./mocks/PlatformMock";
+import PAL from "../src/utils/PAL";
 import { ISwrveConfig } from "../src/interfaces/ISwrveConfig";
 import SwrveConfig from "../src/Config/SwrveConfig";
+import DateHelper from "../src/utils/DateHelper";
 
 const twoDays = 172800000;
 
@@ -193,8 +195,84 @@ const IAMExists = () => {
 
 jest.spyOn(SwrveCoreSDK, "getPlatform").mockReturnValue(new PlatformMock());
 
+const videoTriggerCampaign = (): ISwrveCampaignResourceResponse => ({
+  campaigns: {
+    game_data: {},
+    cdn_root: "https://test.cdn/",
+    version: 1,
+    rules: {
+      max_messages_per_session: 99999,
+      delay_first_message: 0,
+      min_delay_between_messages: 0,
+    },
+    campaigns: [
+      {
+        id: 711602,
+        start_date: Date.now() - 172800000,
+        end_date: Date.now() + 172800000,
+        message_center: false,
+        subject: null,
+        triggers: [{ event_name: "trigger_video_iam", conditions: {} }],
+        rules: {
+          display_order: "random",
+          dismiss_after_views: 99999,
+          delay_first_message: 0,
+          min_delay_between_messages: 0,
+        },
+        message: {
+          id: 810,
+          name: "Video IAM",
+          priority: 1,
+          rules: { orientations: "landscape" },
+          template: {
+            formats: [
+              {
+                name: "landscape",
+                orientation: "landscape",
+                language: "*",
+                size: {
+                  w: { type: "number", value: 320 },
+                  h: { type: "number", value: 240 },
+                },
+                images: [
+                  {
+                    x: { type: "number", value: 0 },
+                    y: { type: "number", value: 0 },
+                    w: { type: "number", value: 320 },
+                    h: { type: "number", value: 240 },
+                    image: { type: "asset", value: "video-asset-sha" },
+                    media_format: "mp4",
+                    video_settings: {
+                      auto_play: true,
+                      loop: false,
+                      fill_screen: false,
+                      show_controls: true,
+                    },
+                  },
+                ],
+                buttons: [],
+                scaled_by: 1,
+                scaled_from: "landscape",
+                scale: 1,
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  flush_frequency: 60,
+  flush_refresh_delay: 60,
+} as any);
+
+const cloneCampaignResponse = (
+  response: ISwrveCampaignResourceResponse
+): ISwrveCampaignResourceResponse => JSON.parse(JSON.stringify(response));
+
 describe("CAMPAIGN MANAGER RULE TESTS", () => {
   beforeEach(function (): void {
+    jest.restoreAllMocks();
+    jest.spyOn(SwrveCoreSDK, "getPlatform").mockReturnValue(new PlatformMock());
     pal = new PlatformMock();
     pal.init([]).then(() => {
       storage = pal.synchronousStorage;
@@ -223,6 +301,35 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
         reset_device_state: true,
         logging: true,
       });
+    });
+  });
+
+  it("Campaign - event trigger is gated until its video asset is cached", function (done: () => void): void {
+    /* The trigger path has its own asset gate (CAMPAIGN_NOT_DOWNLOADED),
+       separate from the message center one, and it must treat a video the
+       same way: blocked until the platform reports it cached. */
+    const videoPath = "https://test.cdn/video-asset-sha";
+    let videoCached = false;
+    jest
+      .spyOn(PAL.getPlatform(), "checkStorageForAsset")
+      .mockImplementation((asset) =>
+        String(asset.getAssetPath()) === videoPath ? videoCached : true
+      );
+
+    const cm = new CampaignManager(profileManager, pal, storageManager);
+    cm.storeCampaigns(videoTriggerCampaign(), {}, () => {
+      expect(
+        cm.checkTriggers("trigger_video_iam", {}, impressionHandler, true)
+          .campaignFailCode
+      ).toBe(CAMPAIGN_NOT_DOWNLOADED);
+
+      videoCached = true;
+
+      expect(
+        cm.checkTriggers("trigger_video_iam", {}, impressionHandler, true)
+          .campaignFailCode
+      ).toBe(CAMPAIGN_MATCH);
+      done();
     });
   });
 
@@ -272,6 +379,160 @@ describe("CAMPAIGN MANAGER RULE TESTS", () => {
     const cm = new CampaignManager(profileManager, pal, storageManager);
 
     cm.storeCampaigns(ended, {}, () => {
+      const { campaignFailCode } = cm.checkTriggers(
+        "tv.event_simple",
+        {},
+        impressionHandler,
+        true
+      );
+      expect(campaignFailCode).toBe(CAMPAIGN_NOT_ACTIVE);
+      done();
+    });
+  });
+
+  it("Campaign - does not trigger during blackout date", function (done: () => void): void {
+    jest
+      .spyOn(DateHelper, "nowInUtcTime")
+      .mockReturnValue(new Date("2030-05-27T10:30:00Z").getTime());
+
+    const blackout = cloneCampaignResponse(passes);
+    const campaign = blackout.campaigns.campaigns[0];
+    campaign.start_date_iso = "2030-05-26T00:00:00Z";
+    campaign.end_date_iso = "2030-05-28T00:00:00Z";
+    campaign.timezone_type = "global";
+    campaign.blackout_dates = [
+      {
+        from: "2030-05-27T10:00:00Z",
+        to: "2030-05-27T11:00:00Z",
+      },
+    ];
+
+    const cm = new CampaignManager(profileManager, pal, storageManager);
+    cm.storeCampaigns(blackout, {}, () => {
+      const { campaignFailCode, campaignStatus } = cm.checkTriggers(
+        "tv.event_simple",
+        {},
+        impressionHandler,
+        true
+      );
+      expect(campaignFailCode).toBe(CAMPAIGN_NOT_ACTIVE);
+      expect(campaignStatus!.message).toContain("is in blackout period");
+      done();
+    });
+  });
+
+  it("Campaign - triggers outside blackout date boundaries", function (done: () => void): void {
+    jest
+      .spyOn(DateHelper, "nowInUtcTime")
+      .mockReturnValue(new Date("2030-05-27T11:00:00Z").getTime());
+
+    const blackout = cloneCampaignResponse(passes);
+    const campaign = blackout.campaigns.campaigns[0];
+    campaign.start_date_iso = "2030-05-26T00:00:00Z";
+    campaign.end_date_iso = "2030-05-28T00:00:00Z";
+    campaign.timezone_type = "global";
+    campaign.blackout_dates = [
+      {
+        from: "2030-05-27T10:00:00Z",
+        to: "2030-05-27T11:00:00Z",
+      },
+    ];
+
+    const cm = new CampaignManager(profileManager, pal, storageManager);
+    cm.storeCampaigns(blackout, {}, () => {
+      const { campaignFailCode } = cm.checkTriggers(
+        "tv.event_simple",
+        {},
+        impressionHandler,
+        true
+      );
+      expect(campaignFailCode).toBe(CAMPAIGN_MATCH);
+      done();
+    });
+  });
+
+  it("Campaign - does not trigger outside interval time", function (done: () => void): void {
+    jest
+      .spyOn(DateHelper, "nowInUtcTime")
+      .mockReturnValue(new Date("2030-05-27T09:59:59Z").getTime());
+
+    const interval = cloneCampaignResponse(passes);
+    const campaign = interval.campaigns.campaigns[0];
+    campaign.start_date_iso = "2030-05-26T00:00:00Z";
+    campaign.end_date_iso = "2030-05-28T00:00:00Z";
+    campaign.timezone_type = "global";
+    campaign.interval_times = [
+      {
+        from: "10:00:00",
+        to: "11:00:00",
+      },
+    ];
+
+    const cm = new CampaignManager(profileManager, pal, storageManager);
+    cm.storeCampaigns(interval, {}, () => {
+      const { campaignFailCode, campaignStatus } = cm.checkTriggers(
+        "tv.event_simple",
+        {},
+        impressionHandler,
+        true
+      );
+      expect(campaignFailCode).toBe(CAMPAIGN_NOT_ACTIVE);
+      expect(campaignStatus!.message).toContain(
+        "is outside active interval time"
+      );
+      done();
+    });
+  });
+
+  it("Campaign - triggers inside interval time", function (done: () => void): void {
+    jest
+      .spyOn(DateHelper, "nowInUtcTime")
+      .mockReturnValue(new Date("2030-05-27T10:30:00Z").getTime());
+
+    const interval = cloneCampaignResponse(passes);
+    const campaign = interval.campaigns.campaigns[0];
+    campaign.start_date_iso = "2030-05-26T00:00:00Z";
+    campaign.end_date_iso = "2030-05-28T00:00:00Z";
+    campaign.timezone_type = "global";
+    campaign.interval_times = [
+      {
+        from: "10:00:00",
+        to: "11:00:00",
+      },
+    ];
+
+    const cm = new CampaignManager(profileManager, pal, storageManager);
+    cm.storeCampaigns(interval, {}, () => {
+      const { campaignFailCode } = cm.checkTriggers(
+        "tv.event_simple",
+        {},
+        impressionHandler,
+        true
+      );
+      expect(campaignFailCode).toBe(CAMPAIGN_MATCH);
+      done();
+    });
+  });
+
+  it("Campaign - rejects interval time that crosses midnight", function (done: () => void): void {
+    jest
+      .spyOn(DateHelper, "nowInUtcTime")
+      .mockReturnValue(new Date("2030-05-27T23:30:00Z").getTime());
+
+    const interval = cloneCampaignResponse(passes);
+    const campaign = interval.campaigns.campaigns[0];
+    campaign.start_date_iso = "2030-05-26T00:00:00Z";
+    campaign.end_date_iso = "2030-05-28T00:00:00Z";
+    campaign.timezone_type = "global";
+    campaign.interval_times = [
+      {
+        from: "23:00:00",
+        to: "01:00:00",
+      },
+    ];
+
+    const cm = new CampaignManager(profileManager, pal, storageManager);
+    cm.storeCampaigns(interval, {}, () => {
       const { campaignFailCode } = cm.checkTriggers(
         "tv.event_simple",
         {},
